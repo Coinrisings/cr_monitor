@@ -202,9 +202,9 @@ class MrDTO(object):
     
     def run_mmr(self, play = True, title = "") -> None:
         self.initialize()
-        print(f"现在账户的有效保证金为：{self.amount_fund * self.now_price}")
-        print(f"现在账户的维持保证金为：{sum(self.mainten_swap.values()) + sum(self.mainten_spot.values())}")
-        print(f"现在账户的mr为：{self.mr}")
+        # print(f"现在账户的有效保证金为：{self.amount_fund * self.now_price}")
+        # print(f"现在账户的维持保证金为：{sum(self.mainten_swap.values()) + sum(self.mainten_spot.values())}")
+        # print(f"现在账户的mr为：{self.mr}")
         self.value_influence = self.coin_value_influence()
         self.spread_influence = self.get_spread_influence()
         if play:

@@ -1,9 +1,14 @@
-import research, os, datetime
+import research, os, datetime, copy
 import pandas as pd
 import numpy as np
 import research.utils.pnlDaily as pnl_daily
 from pymongo import MongoClient
 from research.utils.ObjectDataType import AccountData
+from research.eva import eva
+from Mr_DTO import MrDTO
+from research.utils import draw_ssh
+from bokeh.plotting import figure, show
+from bokeh.models.widgets import Panel, Tabs
 
 class DailyMonitorDTO(object):
     def __init__(self):
@@ -97,7 +102,10 @@ class DailyMonitorDTO(object):
         #获得各个账户的upnl，用现在的现货价格减去开仓价格来计算
         position = {}
         for account in self.accounts.values():
-            now_position = account.get_now_position()
+            if not hasattr(account, "now_position"):
+                now_position = account.get_now_position()
+            else:
+                now_position = account.now_position
             for coin in now_position.index:
                 if account.contract_slave != "-usd-swap":
                     number = now_position.loc[coin, "slave_number"]
@@ -114,14 +122,63 @@ class DailyMonitorDTO(object):
         position = self.get_account_upnl()
         for i in account_overall.index:
             parameter_name = account_overall.loc[i, "account"]
-            #upnl
-            upnl = sum(position[parameter_name]["upnl"].values)
-            account_overall.loc[i, "upnl"] = upnl
             #total MV%
             self.accounts[parameter_name].get_account_position()
             account_overall.loc[i, "MV%"] = sum(self.accounts[parameter_name].position["MV%"].values)
             #mr
             self.accounts[parameter_name].get_mgnRatio()
             account_overall.loc[i, "mr"] = self.accounts[parameter_name].mr["okex"]
+            #upnl
+            upnl = sum(position[parameter_name]["upnl"].values)
+            account_overall.loc[i, "upnl"] = upnl
         self.account_overall = account_overall
         return account_overall
+    
+    def get_change(self):
+        result, funding = eva.observe_dt_trend()
+        for col in funding.columns:
+            funding[col] = funding[col].apply(lambda x: format(x, ".3%"))
+        self.funding_summary = result
+        self.funding = funding
+    
+    def run_mr(self):
+        #推算每个账户的mr情况
+        self.mgnRatio = {}
+        tabs_value = []
+        tabs_spread = []
+        for name, account in self.accounts.items():
+            if not hasattr(account, "now_position"):
+                now_position = account.get_now_position()
+            else:
+                now_position = account.now_position
+            now_price = account.get_coin_price(coin = "btc")
+            account.get_equity()
+            #初始化账户
+            mr_dto = MrDTO(amount_u = now_position.loc["btc", "slave_number"] * 100,
+                        amount_c = now_position.loc["btc", "master_number"],
+                        amount_fund = account.adjEq / now_price,
+                        price_u = now_position.loc["btc", "slave_open_price"], 
+                        price_c = now_position.loc["btc", "master_open_price"],
+                        now_price = now_price)
+            mr_dto.run_mmr(play = False)
+            #保留数据
+            self.mgnRatio[name] = copy.deepcopy(mr_dto)
+            #画图
+            result = mr_dto.value_influence.copy()
+            result["MarginCall"] = 3
+            result["LimitClose"] = 6
+            p1 = draw_ssh.line(result, x_axis_type = "linear", play = False, title = "value influence",
+                            x_axis_label = "coin price", y_axis_label = "mr")
+            tab1 = Panel(child=p1, title=name)
+            result = mr_dto.spread_influence.copy()
+            result["MarginCall"] = 3
+            result["LimitClose"] = 6
+            p2 = draw_ssh.line(result, x_axis_type = "linear", play = False, title = "spread influence",
+                            x_axis_label = "spread", y_axis_label = "mr")
+            tab2 = Panel(child=p2, title=name)
+            tabs_value.append(tab1)
+            tabs_spread.append(tab2)
+        tabs_value_play = Tabs(tabs= tabs_value)
+        tabs_spread_play = Tabs(tabs= tabs_spread)
+        show(tabs_value_play)
+        show(tabs_spread_play)
