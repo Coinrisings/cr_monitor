@@ -1,19 +1,20 @@
 from research.utils import readData
 from research.utils.ObjectDataType import AccountData
 from daily_monitor import DailyMonitorDTO
-import yaml, os, json, requests, datetime
+import yaml, os, json, requests, datetime, copy
 
 class CapitalMonitor(DailyMonitorDTO):
     def __init__(self):
         super().__init__()
         self.load_dingding()
-        self.wanring_hedge = 0
+        self.warning_hedge = 0
+        self.warning_rebalance = 0
         self.warning_account = {"ssh": [],
                                 "brad": [],
                                 "yyz": [],
                                 "scq": []}
     
-    def load_dingding(self):
+    def load_dingding(self) -> None:
         user_path = os.path.expanduser('~')
         cfg_path = os.path.join(user_path, '.dingding')
         with open(os.path.join(cfg_path, 'key.yml')) as f:
@@ -96,10 +97,10 @@ class CapitalMonitor(DailyMonitorDTO):
     
     def run_monitor_pnl(self):
         self.get_coins_str()
-        warning_account = self.warning_account.copy()
+        warning_account = copy.deepcopy(self.warning_account)
         for name, account in self.accounts.items():
             self.get_cashbalance(account)
-            if len(account.cashbalance) > 0:
+            if len(account.cashbalance) > self.warning_hedge:
                 warning_people = self.combo_people[account.combo]
                 warning_account[warning_people].append(name)
             else:
@@ -107,10 +108,10 @@ class CapitalMonitor(DailyMonitorDTO):
         #发送警告
         for people in warning_account.keys():
             number = len(warning_account[people])
-            if number > self.wanring_hedge:
+            if number > 0:
                 data = {
                     "msgtype": "text",
-                    "text": {"content": f"""[AM]-[CashBalanceWarning] \n {warning_account[people]} CashBalance 过去1h对冲超过{self.wanring_hedge}达到{number}次\n时间：{datetime.datetime.now()}"""},
+                    "text": {"content": f"""[AM]-[CashBalanceWarning] \n {warning_account[people]} CashBalance 过去1h对冲超过{self.warning_hedge}达到{number}次\n时间：{datetime.datetime.now()}"""},
                     "at": {
                         "atMobiles": [cm.dingding_config[people]],
                         "isAtAll": False}
@@ -119,6 +120,69 @@ class CapitalMonitor(DailyMonitorDTO):
             else:
                 pass
     
+    def find_af_accounts(self) -> None:
+        #找到跨所账户
+        af_accounts = {}
+        for name, account in self.accounts.items():
+            if account.exchange_master != account.exchange_slave:
+                af_accounts[name] = account
+            else:
+                pass
+        self.af_accounts = af_accounts
+    
+    def load_af_config(self) -> None:
+        #读取转账config
+        with open("/home/tx/archive/yyz/automation/auto_transfer_config.json", "rb") as f:
+            data = json.load(f)
+        self.af_config = data
+    
+    def get_bilateral_assets(self, account) -> None:
+        #获得两边的资产
+        names = {"master": account.exchange_master, "slave": account.exchange_slave}
+        assets = {}
+        
+        for key, exchange in names.items():
+            if exchange in ["okex", "okx", "ok", "okex5", "o"]:
+                exchange_name = "okexv5"
+            else:
+                exchange_name = exchange
+            a = f"""
+            SELECT last(usdt) as adjEq FROM "balance_v2" WHERE time > now() - 10m and username = '{account.username}' and client = '{account.client}' and exchange = '{exchange_name}' and balance_id != '{account.balance_id}'
+            """
+            data = readData.read_influx(a, transfer = False)
+            assets[key] = float(data["adjEq"].values)
+        account.assets = assets
+    
+    def run_monitor_assets(self):
+        self.load_af_config()
+        self.find_af_accounts()
+        self.balance_limit = self.af_config["balance_limit"]
+        warning_account = copy.deepcopy(self.warning_account)
+        for name, account in self.af_accounts.items():
+            self.get_bilateral_assets(account)
+            balance_ratio = self.af_config["balance"][account.combo]
+            if abs(account.assets["master"] / (balance_ratio * account.assets["slave"]) - 1) > self.warning_rebalance * self.balance_limit:
+                warning_people = self.combo_people[account.combo]
+                warning_account[warning_people].append(name)
+            else:
+                pass
+        #发送警告
+        for people in warning_account.keys():
+            number = len(warning_account[people])
+            if number > 0:
+                data = {
+                    "msgtype": "text",
+                    "text": {"content": f"""[AM]-[RebalanceWarning] \n {warning_account[people]} 两边资金相差过大！\n时间：{datetime.datetime.now()}"""},
+                    "at": {
+                        "atMobiles": [cm.dingding_config[people]],
+                        "isAtAll": False}
+                }
+                self.send_dingding(data)
+            else:
+                pass
+            
+    
 cm  = CapitalMonitor()
+cm.run_monitor_assets()
 cm.run_monitor_pnl()
-print(1)
+# cm.run_monitor_pnl()
