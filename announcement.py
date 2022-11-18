@@ -6,10 +6,12 @@ class ExchangeAnnouncement(object):
     def __init__(self) -> None:
         self.url_config = {
             "binance": "https://www.binance.com/en/support/announcement/latest-binance-news?c=49&navId=49",
-            "okex": "https://www.okx.com/support/hc/en-us/sections/360000030652-Latest-Announcements"
+            "okex": "https://www.okx.com/support/hc/en-us/sections/360000030652-Latest-Announcements",
+            "gate": "https://www.gate.io/articlelist/ann"
         }
         self.okex_announcement = {}
         self.binance_announcement = {}
+        self.gate_announcement = {}
         self.keywords = ["delist", "remove"]
         
     def connect_announcement(self, url: str) -> bytes:
@@ -54,6 +56,24 @@ class ExchangeAnnouncement(object):
             else:
                 pass
         self.okex_announcement = {"articles": articles, "title": data}
+        return data
+    
+    def get_gate_announcement(self) -> list:
+        url = self.url_config["gate"]
+        body = self.connect_announcement(url)
+        content = Selector(text=body).xpath('//a').extract()
+        articles = []
+        data = []
+        for info in content:
+            if 'href="/article' in info and 'title=' in info:
+                articles.append(info)
+                start_index = info.index("<h3>")
+                end_index = info.index('</h3>')
+                title = info[start_index+4: end_index]
+                data.append(title)
+            else:
+                pass
+        self.gate_announcement = {"articles": articles, "title": data}
         return data
     
     def get_words(self, title: str) -> list:
@@ -104,8 +124,9 @@ class ExchangeAnnouncement(object):
         titles = {}
         titles["okex"] = self.get_okex_announcement()
         titles["binance"] = self.get_binance_announcement()
-        delist_coins = {"okex": set(), "binance": set()}
-        for exchange in ["okex", "binance"]:
+        titles["gate"] = self.get_gate_announcement()
+        delist_coins = {"okex": set(), "binance": set(), "gate": set()}
+        for exchange in delist_coins.keys():
             for title in titles[exchange]:
                 is_delist, delist_token = self.analyze_title(title)
                 if is_delist:
@@ -117,4 +138,8 @@ class ExchangeAnnouncement(object):
                         pass
                 else:
                     pass
+        if "OKX" in delist_coins["okex"]:
+            delist_coins["okex"].remove("OKX")
+        else:
+            pass
         self.delist_coins = delist_coins
