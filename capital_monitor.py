@@ -171,7 +171,7 @@ class CapitalMonitor(DailyMonitorDTO):
             assets[key] = float(data["adjEq"].values)
         account.assets = assets
     
-    def get_people_coins(self, people: str) -> None:
+    def get_people_coins(self) -> None:
         people_coins = {
             "ssh": set(["all"]),
             "brad": set(["all"]),
@@ -244,6 +244,5 @@ class CapitalMonitor(DailyMonitorDTO):
     
 cm  = CapitalMonitor()
 # cm.run_monitor_assets()
-cm.run_monitor_pnl()
+# cm.run_monitor_pnl()
 cm.run_monitor_delist()
-print(2)

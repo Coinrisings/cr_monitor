@@ -106,14 +106,17 @@ class DailyMonitorDTO(object):
                 now_position = account.get_now_position()
             else:
                 now_position = account.now_position
-            for coin in now_position.index:
-                if account.contract_slave != "-usd-swap":
-                    number = now_position.loc[coin, "slave_number"]
-                else:
-                    number = now_position.loc[coin, "master_number"]
-                price = account.get_coin_price(coin = coin)
-                upnl = abs(price - now_position.loc[coin, "slave_open_price"]) * number
-                now_position.loc[coin, "upnl"] = upnl
+            if len(now_position) >0:
+                for coin in now_position.index:
+                    if account.contract_slave != "-usd-swap":
+                        number = now_position.loc[coin, "slave_number"]
+                    else:
+                        number = now_position.loc[coin, "master_number"]
+                    price = account.get_coin_price(coin = coin)
+                    upnl = abs(price - now_position.loc[coin, "slave_open_price"]) * number
+                    now_position.loc[coin, "upnl"] = upnl
+            else:
+                now_position.loc[coin, "upnl"] = 0
             position[account.parameter_name] = now_position.copy()
         return position
     
@@ -151,33 +154,34 @@ class DailyMonitorDTO(object):
                 now_position = account.get_now_position()
             else:
                 now_position = account.now_position
-            now_price = account.get_coin_price(coin = "btc")
-            account.get_equity()
-            #初始化账户
-            mr_dto = MrDTO(amount_u = now_position.loc["btc", "slave_number"] * 100,
-                        amount_c = now_position.loc["btc", "master_number"],
-                        amount_fund = account.adjEq / now_price,
-                        price_u = now_position.loc["btc", "slave_open_price"], 
-                        price_c = now_position.loc["btc", "master_open_price"],
-                        now_price = now_price)
-            mr_dto.run_mmr(play = False)
-            #保留数据
-            self.mgnRatio[name] = copy.deepcopy(mr_dto)
-            #画图
-            result = mr_dto.value_influence.copy()
-            result["MarginCall"] = 3
-            result["LimitClose"] = 6
-            p1 = draw_ssh.line(result, x_axis_type = "linear", play = False, title = "value influence",
-                            x_axis_label = "coin price", y_axis_label = "mr")
-            tab1 = Panel(child=p1, title=name)
-            result = mr_dto.spread_influence.copy()
-            result["MarginCall"] = 3
-            result["LimitClose"] = 6
-            p2 = draw_ssh.line(result, x_axis_type = "linear", play = False, title = "spread influence",
-                            x_axis_label = "spread", y_axis_label = "mr")
-            tab2 = Panel(child=p2, title=name)
-            tabs_value.append(tab1)
-            tabs_spread.append(tab2)
+            if "btc" in now_position.index:
+                now_price = account.get_coin_price(coin = "btc")
+                account.get_equity()
+                #初始化账户
+                mr_dto = MrDTO(amount_u = now_position.loc["btc", "slave_number"] * 100,
+                            amount_c = now_position.loc["btc", "master_number"],
+                            amount_fund = account.adjEq / now_price,
+                            price_u = now_position.loc["btc", "slave_open_price"], 
+                            price_c = now_position.loc["btc", "master_open_price"],
+                            now_price = now_price)
+                mr_dto.run_mmr(play = False)
+                #保留数据
+                self.mgnRatio[name] = copy.deepcopy(mr_dto)
+                #画图
+                result = mr_dto.value_influence.copy()
+                result["MarginCall"] = 3
+                result["LimitClose"] = 6
+                p1 = draw_ssh.line(result, x_axis_type = "linear", play = False, title = "value influence",
+                                x_axis_label = "coin price", y_axis_label = "mr")
+                tab1 = Panel(child=p1, title=name)
+                result = mr_dto.spread_influence.copy()
+                result["MarginCall"] = 3
+                result["LimitClose"] = 6
+                p2 = draw_ssh.line(result, x_axis_type = "linear", play = False, title = "spread influence",
+                                x_axis_label = "spread", y_axis_label = "mr")
+                tab2 = Panel(child=p2, title=name)
+                tabs_value.append(tab1)
+                tabs_spread.append(tab2)
         tabs_value_play = Tabs(tabs= tabs_value)
         tabs_spread_play = Tabs(tabs= tabs_spread)
         show(tabs_value_play)
