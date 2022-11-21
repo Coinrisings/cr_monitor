@@ -134,7 +134,11 @@ class DailyMonitorDTO(object):
             #upnl
             upnl = sum(position[parameter_name]["upnl"].values)
             account_overall.loc[i, "upnl"] = upnl
-        self.account_overall = account_overall
+        self.account_overall = account_overall.copy()
+        for col in ["capital", "daily_pnl", "mr", "upnl", "MV%"]:
+            account_overall[col] = account_overall[col].apply(lambda x: format(round(x, 2), ","))
+        for col in ["daily_pnl%", "combo_avg"]:
+            account_overall[col] = account_overall[col].apply(lambda x: format(round(x, 4), ".3%"))
         return account_overall
     
     def get_change(self):

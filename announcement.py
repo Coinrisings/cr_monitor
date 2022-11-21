@@ -111,7 +111,7 @@ class ExchangeAnnouncement(object):
         #检索下架公告中的币种信息，用分词全大写来判断
         if is_delist:
             for word in words:
-                if word.isupper():
+                if word.isupper() and word not in ["OKX", "OKEX", "BINANCE", "GATE", "GATEIO"]:
                     real_token = self.get_real_token(word)
                     delist_token.add(real_token)
                 else:

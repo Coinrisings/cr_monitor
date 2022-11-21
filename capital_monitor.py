@@ -131,7 +131,7 @@ class CapitalMonitor(DailyMonitorDTO):
                     "msgtype": "text",
                     "text": {"content": f"""[AM]-[CashBalanceWarning] \n {warning_account[people]} CashBalance 过去1h对冲超过{self.warning_hedge["value"]}的次数超过{self.warning_hedge["amount"]}次\n时间：{datetime.datetime.now()}"""},
                     "at": {
-                        "atMobiles": [cm.dingding_config[people]],
+                        "atMobiles": [self.dingding_config[people]],
                         "isAtAll": False}
                 }
                 self.send_dingding(data)
@@ -211,7 +211,7 @@ class CapitalMonitor(DailyMonitorDTO):
                     "msgtype": "text",
                     "text": {"content": f"""[AM]-[RebalanceWarning] \n {warning_account[people]} 两边资金相差过大！\n时间：{datetime.datetime.now()}"""},
                     "at": {
-                        "atMobiles": [cm.dingding_config[people]],
+                        "atMobiles": [self.dingding_config[people]],
                         "isAtAll": False}
                 }
                 self.send_dingding(data)
@@ -242,7 +242,4 @@ class CapitalMonitor(DailyMonitorDTO):
                 }
                 self.send_dingding(data)
     
-cm  = CapitalMonitor()
-# cm.run_monitor_assets()
-# cm.run_monitor_pnl()
-cm.run_monitor_delist()
+
