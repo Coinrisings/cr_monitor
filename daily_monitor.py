@@ -9,7 +9,8 @@ from Mr_DTO import MrDTO
 from research.utils import draw_ssh
 from bokeh.plotting import figure, show
 from bokeh.models.widgets import Panel, Tabs
-
+os.environ["MONGO_URI"] = 'mongodb://read_only:Abcd1234@10.1.1.254:3717/?authSource=admin'
+os.environ["INFLUX_URI"] = 'program:Coinrising1234@www.tooook.com:28086'
 class DailyMonitorDTO(object):
     def __init__(self):
         self.init_accounts()
@@ -154,13 +155,14 @@ class DailyMonitorDTO(object):
         tabs = []
         self.picture_value = pd.DataFrame()
         self.picture_spread = pd.DataFrame()
+        now_price = list(self.accounts.values())[0].get_coin_price(coin = "btc")
+        cols = []
         for name, account in self.accounts.items():
             if not hasattr(account, "now_position"):
                 now_position = account.get_now_position()
             else:
                 now_position = account.now_position
             if "btc" in now_position.index:
-                now_price = account.get_coin_price(coin = "btc")
                 account.get_equity()
                 #初始化账户
                 mr_dto = MrDTO(amount_u = now_position.loc["btc", "slave_number"] * 100,
@@ -172,15 +174,17 @@ class DailyMonitorDTO(object):
                 mr_dto.run_mmr(play = False)
                 #保留数据
                 self.mgnRatio[name] = copy.deepcopy(mr_dto)
-                self.picture_value[name] = mr_dto.value_influence['mr']
-                self.picture_spread[name] = mr_dto.spread_influence['mr']
+                self.picture_value = pd.concat([mr_dto.value_influence, self.picture_value], axis = 1, join = 'outer')
+                self.picture_spread = pd.concat([mr_dto.spread_influence, self.picture_spread], axis = 1, join = 'outer')
+                cols.append(name)
+        self.picture_value.columns = cols
+        self.picture_spread.columns = cols
         #画图
-        p1 = draw_ssh.line(self.picture_value, x_axis_type = "linear", play = True, title = "value influence",
+        p1 = draw_ssh.line(self.picture_value, x_axis_type = "linear", play = False, title = "value influence",
                         x_axis_label = "coin price", y_axis_label = "mr")
-        if type(p1) != list:
+        if type(p1) == list:
             tab1 = p1
             tabs = tabs + tab1
-            
         else:
             tab1 = Panel(child=p1, title="value influence")
             tabs.append(tab1)
