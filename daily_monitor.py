@@ -151,8 +151,9 @@ class DailyMonitorDTO(object):
     def run_mr(self):
         #推算每个账户的mr情况
         self.mgnRatio = {}
-        tabs_value = []
-        tabs_spread = []
+        tabs = []
+        self.picture_value = pd.DataFrame()
+        self.picture_spread = pd.DataFrame()
         for name, account in self.accounts.items():
             if not hasattr(account, "now_position"):
                 now_position = account.get_now_position()
@@ -171,22 +172,25 @@ class DailyMonitorDTO(object):
                 mr_dto.run_mmr(play = False)
                 #保留数据
                 self.mgnRatio[name] = copy.deepcopy(mr_dto)
-                #画图
-                result = mr_dto.value_influence.copy()
-                result["MarginCall"] = 3
-                result["LimitClose"] = 6
-                p1 = draw_ssh.line(result, x_axis_type = "linear", play = False, title = "value influence",
-                                x_axis_label = "coin price", y_axis_label = "mr")
-                tab1 = Panel(child=p1, title=name)
-                result = mr_dto.spread_influence.copy()
-                result["MarginCall"] = 3
-                result["LimitClose"] = 6
-                p2 = draw_ssh.line(result, x_axis_type = "linear", play = False, title = "spread influence",
-                                x_axis_label = "spread", y_axis_label = "mr")
-                tab2 = Panel(child=p2, title=name)
-                tabs_value.append(tab1)
-                tabs_spread.append(tab2)
-        tabs_value_play = Tabs(tabs= tabs_value)
-        tabs_spread_play = Tabs(tabs= tabs_spread)
-        show(tabs_value_play)
-        show(tabs_spread_play)
+                self.picture_value[name] = mr_dto.value_influence['mr']
+                self.picture_spread[name] = mr_dto.spread_influence['mr']
+        #画图
+        p1 = draw_ssh.line(self.picture_value, x_axis_type = "linear", play = True, title = "value influence",
+                        x_axis_label = "coin price", y_axis_label = "mr")
+        if type(p1) != list:
+            tab1 = p1
+            tabs = tabs + tab1
+            
+        else:
+            tab1 = Panel(child=p1, title="value influence")
+            tabs.append(tab1)
+        p2 = draw_ssh.line(self.picture_spread, x_axis_type = "linear", play = False, title = "spread influence",
+                        x_axis_label = "spread", y_axis_label = "mr")
+        if type(p2) == list:
+            tab2 = p2
+            tabs = tabs + tab2
+        else:
+            tab2 = Panel(child=p2, title="value influence")
+            tabs.append(tab2)
+        tabs_play = Tabs(tabs= tabs)
+        show(tabs_play)
