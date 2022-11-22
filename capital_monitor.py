@@ -149,9 +149,11 @@ class CapitalMonitor(DailyMonitorDTO):
         self.af_accounts = af_accounts
     
     def load_af_config(self) -> None:
-        #读取转账config
-        with open("/home/tx/archive/yyz/automation/auto_transfer_config.json", "rb") as f:
-            data = json.load(f)
+        #设置转账config
+        data = {"balance": {"okx_usdt_swap-binance_usdt_swap": 1,
+                            "okx_usd_swap-binance_usdt_swap": 1,
+                            "gate_usdt_swap-okx_usdt_swap": 1},
+               "balance_limit": 0.5}
         self.af_config = data
     
     def get_bilateral_assets(self, account) -> None:

@@ -136,18 +136,32 @@ class DailyMonitorDTO(object):
             upnl = sum(position[parameter_name]["upnl"].values)
             account_overall.loc[i, "upnl"] = upnl
         self.account_overall = account_overall.copy()
-        for col in ["capital", "daily_pnl", "mr", "upnl", "MV%"]:
-            account_overall[col] = account_overall[col].apply(lambda x: format(round(x, 2), ","))
-        for col in ["daily_pnl%", "combo_avg"]:
-            account_overall[col] = account_overall[col].apply(lambda x: format(round(x, 4), ".3%"))
+        format_dict = {'capital': lambda x: format(round(x, 4), ","), 
+               'daily_pnl': '{0:.4f}', 
+               'daily_pnl%': '{0:.4%}', 
+               #'规模对应日期':lambda x: "{}".format(x.strftime('%Y%m%d')),
+               'combo_avg': '{0:.4%}', 
+               'MV%': '{0:.2f}', 
+               'mr': lambda x: format(round(x, 2), ","),
+               'upnl': lambda x: format(round(x, 2), ",")
+                }
+        account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = ["daily_pnl", "daily_pnl%", "MV%", "mr", 'upnl'])
         return account_overall
     
     def get_change(self):
         result, funding = eva.observe_dt_trend()
-        for col in funding.columns:
-            funding[col] = funding[col].apply(lambda x: format(x, ".3%"))
-        self.funding_summary = result
-        self.funding = funding
+        self.funding_summary = copy.deepcopy(result)
+        self.funding = copy.deepcopy(funding)
+        format_dict = {}
+        for col in result.columns:
+            if col != "vol_24h":
+                result[col] = result[col].apply(lambda x: float(x.split("%")[0])/100)
+                format_dict[col] = '{0:.3%}'
+            else:
+                result[col] = result[col].apply(lambda x: float(x.replace(",", "")) if type(x) == str else np.nan)
+                format_dict[col] = lambda x: format(round(x, 0), ",")
+        funding_summary = result.style.format(format_dict).background_gradient(cmap='Blues')
+        return funding_summary
     
     def run_mr(self):
         #推算每个账户的mr情况
@@ -179,22 +193,36 @@ class DailyMonitorDTO(object):
                 cols.append(name)
         self.picture_value.columns = cols
         self.picture_spread.columns = cols
+        value = copy.deepcopy(self.picture_value)
+        spread = copy.deepcopy(self.picture_spread)
+        value = value.style.applymap(set_color)
+        spread = spread.style.applymap(set_color)
+        return value, spread
         #画图
-        p1 = draw_ssh.line(self.picture_value, x_axis_type = "linear", play = False, title = "value influence",
-                        x_axis_label = "coin price", y_axis_label = "mr")
-        if type(p1) == list:
-            tab1 = p1
-            tabs = tabs + tab1
-        else:
-            tab1 = Panel(child=p1, title="value influence")
-            tabs.append(tab1)
-        p2 = draw_ssh.line(self.picture_spread, x_axis_type = "linear", play = False, title = "spread influence",
-                        x_axis_label = "spread", y_axis_label = "mr")
-        if type(p2) == list:
-            tab2 = p2
-            tabs = tabs + tab2
-        else:
-            tab2 = Panel(child=p2, title="value influence")
-            tabs.append(tab2)
-        tabs_play = Tabs(tabs= tabs)
-        show(tabs_play)
+        # p1 = draw_ssh.line(self.picture_value, x_axis_type = "linear", play = False, title = "value influence",
+        #                 x_axis_label = "coin price", y_axis_label = "mr")
+        # if type(p1) == list:
+        #     tab1 = p1
+        #     tabs = tabs + tab1
+        # else:
+        #     tab1 = Panel(child=p1, title="value influence")
+        #     tabs.append(tab1)
+        # p2 = draw_ssh.line(self.picture_spread, x_axis_type = "linear", play = False, title = "spread influence",
+        #                 x_axis_label = "spread", y_axis_label = "mr")
+        # if type(p2) == list:
+        #     tab2 = p2
+        #     tabs = tabs + tab2
+        # else:
+        #     tab2 = Panel(child=p2, title="value influence")
+        #     tabs.append(tab2)
+        # tabs_play = Tabs(tabs= tabs)
+        # show(tabs_play)
+def set_color(val):
+    #set mr color
+    if val <=3:
+        color = 'red'
+    elif val <=6:
+        color = 'orange'
+    else:
+        color = 'black'
+    return 'background-color: %s' % color

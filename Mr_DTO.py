@@ -182,15 +182,15 @@ class MrDTO(object):
         return mr
     
     def coin_value_influence(self) -> pd.DataFrame:
-        price_min = 1
-        price_max = self.now_price * 2
+        price_min = min(self.now_price * 0.5, 4000)
+        price_max = self.now_price * 1.5
         result = pd.DataFrame(columns = ["mr"])
-        for price in np.linspace(price_min, price_max, num = 100):
+        for price in np.linspace(price_min, price_max, num = 25):
             result.loc[price, "mr"] = self.get_mr(price)
         return result
     
     def get_spread_influence(self) -> pd.DataFrame:
-        spreads = np.linspace(0, 0.5)
+        spreads = np.linspace(0, 0.5, num = 25)
         result = pd.DataFrame(columns = ["mr"])
         for spread in spreads:
             fund_value = self.amount_fund * self.now_price - spread * self.value_c
