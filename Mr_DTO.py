@@ -1,4 +1,4 @@
-import datetime, ccxt, os, yaml
+import datetime, ccxt, os, yaml, requests
 import pandas as pd
 import numpy as np
 from okex import Public_api
@@ -22,14 +22,14 @@ class MrDTO(object):
         #coin: the assest and position currency
         #is_long: the direction of position. "long" means long c_swap and short u_swap, while "short" means short c_swap and long u_swap
         self.amount = {"usdt": amount_u, "usd": amount_c}
+        self.api_url = 'https://www.okex.com/api/v5/public/position-tiers'
         self.holding_price = {"usdt": price_u, "usd": price_c}
         self.now_price = now_price
         self.amount_fund = amount_fund
         self.is_long = is_long
         self.coin = coin.upper()
-        self.api = None # okex api
+        # self.api = None # okex api
         self.contract = self.get_contractsize() # the contractSize of coin
-        self.load_api()
         self.coin_u = self.contract["usdt"] * self.amount["usdt"] # the amount of USDT swap coins in holding position
         self.value_c = self.contract["usd"] * self.amount["usd"] # the market value of USD swap in holding position
 
@@ -49,14 +49,14 @@ class MrDTO(object):
         with open(os.path.join(cfg_path, 'okex.yml')) as f:
             self.key = yaml.load(f, Loader = yaml.SafeLoader)[0]
         
-    def load_api(self) -> None:
-        #initialize okex api
-        self.load_okex_key()
-        api_key = self.key["api_key"]
-        api_secret_key = self.key["api_secret_key"]
-        passphrase = self.key["passphrase"]
-        pub = Public_api.PublicAPI(api_key, api_secret_key, passphrase)
-        self.api = pub
+    # def load_api(self) -> None:
+    #     #initialize okex api
+    #     self.load_okex_key()
+    #     api_key = self.key["api_key"]
+    #     api_secret_key = self.key["api_secret_key"]
+    #     passphrase = self.key["passphrase"]
+    #     pub = Public_api.PublicAPI(api_key, api_secret_key, passphrase)
+    #     self.api = pub
         
     def get_contractsize(self) -> dict:
         #get contractsize of this coin
@@ -75,11 +75,24 @@ class MrDTO(object):
                 tiers.loc[i, col] = eval(data[i][col])
         return tiers
     
+    
+    def get_tier(self, instType, tdMode, uly=None, instId=None, tier=None, ccy = None):
+        params = {k:v  for k, v in locals().items() if k != 'self' and v is not None}
+        url = self.parse_params_to_str(params)
+        ret = requests.get(self.api_url+url)
+        return ret.json()
+    
+    def parse_params_to_str(self, params):
+        url = '?'
+        for key, value in params.items():
+            url = url + str(key) + '=' + str(value) + '&'
+        return url[0:-1]
+    
     def get_swap_tier(self) -> dict:
         swap_tier = {}
         for suffix in ["usdt", "usd"]:
             name = f"{self.coin}-{suffix.upper()}"
-            data = self.api.get_tier(instType = "SWAP", 
+            data = self.get_tier(instType = "SWAP", 
                     tdMode = "cross",
                     uly= name,
                     instId= name,
@@ -91,7 +104,7 @@ class MrDTO(object):
     def get_spot_tier(self) -> dict:
         spot_tier = {}
         for ccy in [self.coin, "USDT"]:
-            data = self.api.get_tier(instType = "MARGIN", 
+            data = self.get_tier(instType = "MARGIN", 
                 tdMode = "cross",
                 ccy = ccy)["data"]
             tier = self.handle_origin_tier(data)

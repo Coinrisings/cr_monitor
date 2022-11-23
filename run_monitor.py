@@ -1,5 +1,6 @@
 from capital_monitor import CapitalMonitor
 import datetime, time
+from daily_monitor import DailyMonitorDTO
 
 while True:
     cm  = CapitalMonitor()
