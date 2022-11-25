@@ -69,7 +69,7 @@ class DailyMonitorDTO(object):
         return master, slave, ccy
     
     def init_accounts(self) -> None:
-        #初始化所有DTO账户
+        """初始化所有DTO账户"""
         deploy_ids = self.get_all_deploys()
         accounts = {}
         for deploy_id in deploy_ids:
