@@ -9,8 +9,6 @@ from Mr_DTO import MrDTO
 from research.utils import draw_ssh
 from bokeh.plotting import figure, show
 from bokeh.models.widgets import Panel, Tabs
-os.environ["MONGO_URI"] = 'mongodb://read_only:Abcd1234@10.1.1.254:3717/?authSource=admin'
-os.environ["INFLUX_URI"] = 'program:Coinrising1234@www.tooook.com:28086'
 class DailyMonitorDTO(object):
     def __init__(self):
         self.init_accounts()

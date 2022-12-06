@@ -1,17 +1,19 @@
 from Mr_DTO import MrDTO
 from research.utils.ObjectDataType import AccountData
 import os
-add = 0
-ch005 = AccountData(
-	username = "ch005",
-	client = "ch",
-	parameter_name = "ch_ch005",
+add = 1
+os.environ["MONGO_URI"] = 'mongodb://read_only:Abcd1234@10.1.1.254:3717/?authSource=admin'
+os.environ["INFLUX_URI"] = 'program:Coinrising1234@www.tooook.com:28086'
+anta001 = AccountData(
+	username = "anta001",
+	client = "anta",
+	parameter_name = "anta_anta1001",
 	master = "okx_usd_swap",
 	slave = "okx_usdt_swap",
 	principal_currency = "BTC",
 	strategy = "funding",
-    deploy_id = "ch_ch005@dt_okex_cswap_okex_uswap_btc")
-for account in [ch005]:
+    deploy_id = "anta_anta001@dt_okex_cswap_okex_uswap_btc")
+for account in [anta001]:
     now_position = account.get_now_position()
     now_price = account.get_coin_price(coin = "btc")
     account.get_equity()
