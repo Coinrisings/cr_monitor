@@ -13,14 +13,14 @@ class MrDTO(object):
     position and asset ccy is the same."""
     
     def __init__(self, amount_u: int, amount_c: int, amount_fund: float, price_u: float, price_c: float, now_price: float, coin = "BTC", is_long = True):
-        #amount_u: the amount of USDT swap contracts(not coins) in holding position
-        #amount_c: the amount of USD swap contracts(not dollars) in holding position
-        #amount_fund: the amount of asset 
-        #price_u: the average price of USDT swap in holding position
-        #price_c: the average price of USD swap in holding position
-        #now_price: the price of coin, now
-        #coin: the assest and position currency
-        #is_long: the direction of position. "long" means long c_swap and short u_swap, while "short" means short c_swap and long u_swap
+        """amount_u: the amount of USDT swap contracts(not coins) in holding position
+        amount_c: the amount of USD swap contracts(not dollars) in holding position
+        amount_fund: the amount of asset 
+        price_u: the average price of USDT swap in holding position
+        price_c: the average price of USD swap in holding position
+        now_price: the price of coin, now
+        coin: the assest and position currency
+        is_long: the direction of position. "long" means long c_swap and short u_swap, while "short" means short c_swap and long u_swap"""
         self.amount = {"usdt": amount_u, "usd": amount_c}
         self.api_url = 'https://www.okex.com/api/v5/public/position-tiers'
         self.holding_price = {"usdt": price_u, "usd": price_c}
@@ -28,12 +28,13 @@ class MrDTO(object):
         self.amount_fund = amount_fund
         self.is_long = is_long
         self.coin = coin.upper()
-        # self.api = None # okex api
         self.contract = self.get_contractsize() # the contractSize of coin
         self.coin_u = self.contract["usdt"] * self.amount["usdt"] # the amount of USDT swap coins in holding position
         self.value_c = self.contract["usd"] * self.amount["usd"] # the market value of USD swap in holding position
 
     def initialize(self) -> None:
+        """initialize account MarginRatio
+        """
         self.swap_tier = self.get_swap_tier()
         self.spot_tier = self.get_spot_tier()
         self.mmr_swap = self.get_mmr_swap()
@@ -59,7 +60,7 @@ class MrDTO(object):
     #     self.api = pub
         
     def get_contractsize(self) -> dict:
-        #get contractsize of this coin
+        """get contractsize of this coin"""
         exchange = ccxt.okex()
         markets = exchange.load_markets()
         contract = {}
@@ -76,7 +77,7 @@ class MrDTO(object):
         return tiers
     
     
-    def get_tier(self, instType, tdMode, uly=None, instId=None, tier=None, ccy = None):
+    def get_tier(self, instType, tdMode, instFamily=None, instId=None, tier=None, ccy = None):
         params = {k:v  for k, v in locals().items() if k != 'self' and v is not None}
         url = self.parse_params_to_str(params)
         ret = requests.get(self.api_url+url)
