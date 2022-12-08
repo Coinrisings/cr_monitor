@@ -161,6 +161,25 @@ class DailyMonitorDTO(object):
         funding_summary = result.style.format(format_dict).background_gradient(cmap='Blues')
         return funding_summary
     
+    def get_btc_parameter(self):
+        data = pd.DataFrame(columns = ["open", "close_maker","position", "close_taker",
+                               "open2", "close_maker2", "position2", "close_taker2",
+                              "fragment", "fragment_min", "funding_fee_loss_stop_open", "funding_fee_profit_stop_close", "timestamp"])
+        contract = "btc-usd-swap"
+        for name, account in self.accounts.items():
+            origin_data = account.get_now_parameter()
+            side = account.get_now_position().loc["btc", "side"]
+            parameter = origin_data.loc[0, "spreads"][contract]
+            timestamp = origin_data.loc[0, "_comments"]["timestamp"]
+            for col in ["open", "close_maker","position", "close_taker"]:
+                data.loc[name, col] = parameter[side][0][col]
+            for col in ["open2", "close_maker2","position2", "close_taker2"]:
+                data.loc[name, col] = parameter[side][1][col.split("2")[0]]
+            for col in ["fragment", "fragment_min", "funding_fee_loss_stop_open", "funding_fee_profit_stop_close"]:
+                data.loc[name, col] = parameter["ctrl"][col]
+            data.loc[name, "timestamp"] = timestamp
+        self.btc_parameter = data.copy()
+    
     def run_mr(self):
         #推算每个账户的mr情况
         self.mgnRatio = {}
@@ -188,9 +207,8 @@ class DailyMonitorDTO(object):
                 self.mgnRatio[name] = copy.deepcopy(mr_dto)
                 self.picture_value = pd.concat([mr_dto.value_influence, self.picture_value], axis = 1, join = 'outer')
                 self.picture_spread = pd.concat([mr_dto.spread_influence, self.picture_spread], axis = 1, join = 'outer')
-                cols.append(name)
-        self.picture_value.columns = cols
-        self.picture_spread.columns = cols
+                self.picture_value.rename({"mr": name}, inplace = True, axis = 1)
+                self.picture_spread.rename({"mr": name}, inplace = True, axis = 1)
         value = copy.deepcopy(self.picture_value)
         spread = copy.deepcopy(self.picture_spread)
         value = value.style.applymap(set_color)
@@ -222,5 +240,5 @@ def set_color(val):
     elif val <=6:
         color = 'orange'
     else:
-        color = 'black'
+        color = 'green'
     return 'background-color: %s' % color

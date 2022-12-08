@@ -1,7 +1,6 @@
 import datetime, ccxt, os, yaml, requests
 import pandas as pd
 import numpy as np
-from okex import Public_api
 from research.utils import draw_ssh
 from bokeh.plotting import figure, show
 from bokeh.models.widgets import Panel, Tabs
@@ -95,7 +94,7 @@ class MrDTO(object):
             name = f"{self.coin}-{suffix.upper()}"
             data = self.get_tier(instType = "SWAP", 
                     tdMode = "cross",
-                    uly= name,
+                    instFamily= name,
                     instId= name,
                     tier="")["data"]
             tier = self.handle_origin_tier(data)
