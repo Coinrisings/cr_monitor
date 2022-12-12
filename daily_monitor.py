@@ -148,6 +148,8 @@ class DailyMonitorDTO(object):
     
     def get_change(self):
         result, funding = eva.observe_dt_trend()
+        result.dropna(how = "all", inplace = True)
+        funding.dropna(how = "all", inplace = True)
         self.funding_summary = copy.deepcopy(result)
         self.funding = copy.deepcopy(funding)
         format_dict = {}
@@ -168,7 +170,11 @@ class DailyMonitorDTO(object):
         contract = "btc-usd-swap"
         for name, account in self.accounts.items():
             origin_data = account.get_now_parameter()
-            side = account.get_now_position().loc["btc", "side"]
+            account.get_now_position()
+            if "btc" in account.now_position.index.values:
+                side = account.now_position.loc["btc", "side"]
+            else:
+                side = "long"
             parameter = origin_data.loc[0, "spreads"][contract]
             timestamp = origin_data.loc[0, "_comments"]["timestamp"]
             for col in ["open", "close_maker","position", "close_taker"]:
@@ -214,25 +220,6 @@ class DailyMonitorDTO(object):
         value = value.style.applymap(set_color)
         spread = spread.style.applymap(set_color)
         return value, spread
-        #画图
-        # p1 = draw_ssh.line(self.picture_value, x_axis_type = "linear", play = False, title = "value influence",
-        #                 x_axis_label = "coin price", y_axis_label = "mr")
-        # if type(p1) == list:
-        #     tab1 = p1
-        #     tabs = tabs + tab1
-        # else:
-        #     tab1 = Panel(child=p1, title="value influence")
-        #     tabs.append(tab1)
-        # p2 = draw_ssh.line(self.picture_spread, x_axis_type = "linear", play = False, title = "spread influence",
-        #                 x_axis_label = "spread", y_axis_label = "mr")
-        # if type(p2) == list:
-        #     tab2 = p2
-        #     tabs = tabs + tab2
-        # else:
-        #     tab2 = Panel(child=p2, title="value influence")
-        #     tabs.append(tab2)
-        # tabs_play = Tabs(tabs= tabs)
-        # show(tabs_play)
 def set_color(val):
     #set mr color
     if val <=3:
