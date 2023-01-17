@@ -68,7 +68,7 @@ class MrDTO(object):
         return contract
 
     def handle_origin_tier(self, data: list) -> pd.DataFrame:
-        #"data" is the origin data return from okex api
+        """"data" is the origin data return from okex api"""
         tiers = pd.DataFrame(columns = ["minSz", "maxSz", "mmr", "imr", "maxLever"])
         for i in range(len(data)):
             for col in tiers.columns:
@@ -112,7 +112,11 @@ class MrDTO(object):
         return spot_tier
             
     def get_mmr_swap(self) -> dict:
-        #get swap maintenance margin ratio
+        """get swap maintenance margin ratio
+        Returns:
+            dict: maintenance margin ratio of swap
+        """
+        #
         mmr_swap = {}
         for contract in ["usdt", "usd"]:
             tier = self.swap_tier[contract]
@@ -126,9 +130,15 @@ class MrDTO(object):
         return mmr_swap
     
     def get_mmr_spot(self, amount: float, ccy: str) -> float:
-        #get spot maintenance margin ratio
-        #amount: the number of negative upnl coin
-        #ccy: the name of negative upnl coin
+        """get spot maintenance margin ratio
+
+        Args:
+            amount (float): the number of negative upnl coin
+            ccy (str): the name of negative upnl coin
+
+        Returns:
+            float: maintenance margin ratio of spot
+        """
         tier = self.spot_tier[ccy]
         mmr = 0
         if amount > 0:
@@ -145,8 +155,14 @@ class MrDTO(object):
         return mmr 
     
     def get_upnl(self, now_price: float) -> dict:
-        #now_price: now price of coin, or a assumed price
-        upnl = {"USDT": 0, self.coin: 0} #the amount of coin, not dollars
+        """
+        Args:
+            now_price (float): now price of coin, or a assumed price
+
+        Returns:
+            dict: the amount of coin, not dollars. upnl = {"USDT": float, self.coin: float}
+        """
+        upnl = {"USDT": 0, self.coin: 0} #
         if self.is_long:
             upnl[self.coin] = self.value_c / self.holding_price["usd"] - self.value_c / now_price + self.amount_fund
             upnl["USDT"] = (self.holding_price["usdt"] - now_price) * self.coin_u
@@ -156,7 +172,13 @@ class MrDTO(object):
         return upnl
     
     def get_upnl_spread(self, spread: float) -> dict:
-        # assumed spread
+        """
+        Args:
+            spread (float): assumed spread
+
+        Returns:
+            dict: the amount of coin, not dollars. upnl = {"USDT": float, self.coin: float}
+        """
         now_price = self.now_price
         upnl = {"USDT": 0, self.coin: 0} 
         if self.is_long:
@@ -215,9 +237,6 @@ class MrDTO(object):
     
     def run_mmr(self, play = True, title = "") -> None:
         self.initialize()
-        # print(f"现在账户的有效保证金为：{self.amount_fund * self.now_price}")
-        # print(f"现在账户的维持保证金为：{sum(self.mainten_swap.values()) + sum(self.mainten_spot.values())}")
-        # print(f"现在账户的mr为：{self.mr}")
         self.value_influence = self.coin_value_influence()
         self.spread_influence = self.get_spread_influence()
         if play:
