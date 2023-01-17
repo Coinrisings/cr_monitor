@@ -6,7 +6,7 @@ from pymongo import MongoClient
 from research.utils.ObjectDataType import AccountData
 from research.eva import eva
 from Mr_DTO import MrDTO
-from research.utils import draw_ssh
+from research.utils import draw_ssh, readData
 from bokeh.plotting import figure, show
 from bokeh.models.widgets import Panel, Tabs
 class DailyMonitorDTO(object):
@@ -119,20 +119,70 @@ class DailyMonitorDTO(object):
             position[account.parameter_name] = now_position.copy()
         return position
     
+    def get_last_equity(self, account) -> float:
+        ccy = account.principal_currency.lower()
+        a = f"""
+        select mean({ccy}) as equity from balance_v2 where balance_id = '{account.balance_id}' and time >= now() - 30m
+        """
+        data = readData.read_influx(a, transfer = False)
+        if len(data) == 0:
+            a = f"""
+            select last({ccy}) as equity from balance_v2 where balance_id = '{account.balance_id}' and time >= now() - 1d
+            """
+            data = readData.read_influx(a, transfer = False)
+        if len(data) == 0:
+            data = pd.DataFrame(columns = ["equity"])
+            data.loc[0, "equity"] = np.nan
+        equity = data.loc[0, "equity"]
+        return equity
+
+    def get_7d_equity(self, account) -> float:
+        ccy = account.principal_currency.lower()
+        a = f"""
+        select mean({ccy}) as equity from balance_v2 where balance_id = '{account.balance_id}' and time >= now() - 7d - 30m and time <= now() - 7d
+        """
+        data = readData.read_influx(a, transfer = False)
+        if len(data) == 0:
+            a = f"""
+            select last({ccy}) as equity from balance_v2 where balance_id = '{account.balance_id}' and time >= now() - 8d and time <= now() - 6d
+            """
+            data = readData.read_influx(a, transfer = False)
+        if len(data) == 0:
+            data = pd.DataFrame(columns = ["equity"])
+            data.loc[0, "equity"] = np.nan
+        equity = data.loc[0, "equity"]
+        return equity
+
+    def get_week_profit(self, account) -> float:
+        equity = {}
+        equity["now"] = self.get_last_equity(account)
+        equity["7d"] = self.get_7d_equity(account)
+        profit = equity["now"] / equity["7d"] - 1
+        return profit
+    
     def run_daily(self) -> pd.DataFrame:
         result, account_overall = self.get_pnl_daily.run_daily_pnl(accounts = list(self.accounts.values()), save_excel = False)
-        position = self.get_account_upnl()
         for i in account_overall.index:
             parameter_name = account_overall.loc[i, "account"]
+            #adjEq
+            adjEq = self.get_last_equity(self.accounts[parameter_name])
+            account_overall.loc[i, "capital"] = adjEq
             #total MV%
             self.accounts[parameter_name].get_account_position()
-            account_overall.loc[i, "MV%"] = sum(self.accounts[parameter_name].position["MV%"].values)
+            if hasattr(self.accounts[parameter_name], "position"):
+                account_overall.loc[i, "MV%"] = sum(self.accounts[parameter_name].position["MV%"].values)
+            else:
+                account_overall.loc[i, "MV%"] = 0
             #mr
             self.accounts[parameter_name].get_mgnRatio()
             account_overall.loc[i, "mr"] = self.accounts[parameter_name].mr["okex"]
-            #upnl
-            upnl = sum(position[parameter_name]["upnl"].values)
-            account_overall.loc[i, "upnl"] = upnl
+            # #upnl
+            # upnl = sum(position[parameter_name]["upnl"].values)
+            # account_overall.loc[i, "upnl"] = upnl
+            # week_profit
+            profit = self.get_week_profit(self.accounts[parameter_name])
+            account_overall.loc[i, "week_profit"] = profit
+            
         self.account_overall = account_overall.copy()
         format_dict = {'capital': lambda x: format(round(x, 4), ","), 
                'daily_pnl': '{0:.4f}', 
@@ -141,9 +191,9 @@ class DailyMonitorDTO(object):
                'combo_avg': '{0:.4%}', 
                'MV%': '{0:.2f}', 
                'mr': lambda x: format(round(x, 2), ","),
-               'upnl': lambda x: format(round(x, 2), ",")
+               'week_profit': '{0:.4%}'
                 }
-        account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = ["daily_pnl", "daily_pnl%", "MV%", "mr", 'upnl'])
+        account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = ["daily_pnl", "daily_pnl%", "MV%", "mr", 'week_profit'])
         return account_overall
     
     def get_change(self):
@@ -163,28 +213,41 @@ class DailyMonitorDTO(object):
         funding_summary = result.style.format(format_dict).background_gradient(cmap='Blues')
         return funding_summary
     
-    def get_btc_parameter(self):
+    def get_coin_parameter(self, coin: str) -> pd.DataFrame:
         data = pd.DataFrame(columns = ["open", "close_maker","position", "close_taker",
                                "open2", "close_maker2", "position2", "close_taker2",
-                              "fragment", "fragment_min", "funding_fee_loss_stop_open", "funding_fee_profit_stop_close", "timestamp"])
-        contract = "btc-usd-swap"
+                              "fragment", "fragment_min", "side","funding_fee_loss_stop_open", "funding_fee_profit_stop_close", "timestamp"])
+        contract = f"{coin}-usd-swap"
         for name, account in self.accounts.items():
             origin_data = account.get_now_parameter()
             account.get_now_position()
-            if "btc" in account.now_position.index.values:
-                side = account.now_position.loc["btc", "side"]
-            else:
-                side = "long"
-            parameter = origin_data.loc[0, "spreads"][contract]
-            timestamp = origin_data.loc[0, "_comments"]["timestamp"]
-            for col in ["open", "close_maker","position", "close_taker"]:
-                data.loc[name, col] = parameter[side][0][col]
-            for col in ["open2", "close_maker2","position2", "close_taker2"]:
-                data.loc[name, col] = parameter[side][1][col.split("2")[0]]
-            for col in ["fragment", "fragment_min", "funding_fee_loss_stop_open", "funding_fee_profit_stop_close"]:
-                data.loc[name, col] = parameter["ctrl"][col]
-            data.loc[name, "timestamp"] = timestamp
+            if coin in account.now_position.index.values:
+                side = account.now_position.loc[coin, "side"]
+            elif contract in origin_data.loc[0, "spreads"]:
+                if "long" in origin_data.loc[0, "spreads"][contract]:
+                    side = "long"
+                else:
+                    side = "short"
+            if contract in origin_data.loc[0, "spreads"]:
+                parameter = origin_data.loc[0, "spreads"][contract]
+                timestamp = origin_data.loc[0, "_comments"]["timestamp"]
+                for col in ["open", "close_maker","position", "close_taker"]:
+                    data.loc[name, col] = parameter[side][0][col]
+                for col in ["open2", "close_maker2","position2", "close_taker2"]:
+                    data.loc[name, col] = parameter[side][1][col.split("2")[0]]
+                for col in ["fragment", "fragment_min", "funding_fee_loss_stop_open", "funding_fee_profit_stop_close"]:
+                    data.loc[name, col] = parameter["ctrl"][col]
+                data.loc[name, "side"] = side
+                data.loc[name, "timestamp"] = timestamp
+        return data
+    
+    def get_btc_parameter(self):
+        data = self.get_coin_parameter(coin = "btc")
         self.btc_parameter = data.copy()
+    
+    def get_eth_parameter(self):
+        data = self.get_coin_parameter(coin = "eth")
+        self.eth_parameter = data.copy()
     
     def run_mr(self):
         #推算每个账户的mr情况
