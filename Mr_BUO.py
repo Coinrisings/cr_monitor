@@ -2,6 +2,8 @@ from Mr_DTO import MrDTO
 import ccxt, os
 from research.utils import readData
 import numpy as np
+import pandas as pd
+
 os.environ["MONGO_URI"] = 'mongodb://read_only:Abcd1234@10.1.1.254:3717/?authSource=admin'
 os.environ["INFLUX_URI"] = 'program:Coinrising1234@www.tooook.com:28086'
 class MrBUO(MrDTO):
@@ -134,14 +136,37 @@ class MrBUO(MrDTO):
         mr = fund_value / total_mainten
         return mr
     
+    def get_spread_influence(self) -> pd.DataFrame:
+        spreads = np.linspace(0, 0.5, num = 25)
+        result = pd.DataFrame(columns = ["mr"])
+        for spread in spreads:
+            fund_value = self.amount_fund * self.now_price - spread * self.coin_u * self.now_price
+            mainten_swap, mainten_spot = self.get_maintenance(now_price = self.now_price, spread = spread)
+            total_mainten = sum(mainten_swap.values()) + sum(mainten_spot.values()) + (self.coin_c * self.now_price + self.coin_u * self.now_price) * 0.0008
+            mr = fund_value / total_mainten
+            result.loc[spread, "mr"] = mr
+        return result
+    
+    def get_upnl_spread(self, spread: float) -> dict:
+        # assumed spread
+        now_price = self.now_price
+        upnl = {"USDT": 0, "USDC": 0} 
+        if self.is_long:
+            price_u = now_price * (1 - spread)
+        else:
+            price_u = now_price * (1 + spread)
+        upnl["USDC"] = (price_u - self.holding_price["usdc"]) * self.coin_c
+        upnl["USDT"] = (self.holding_price["usdt"] - price_u) * self.coin_u
+        return upnl
+    
 coin = "btc"
 key = f"okexv5/{coin}-usdt"
 key = bytes(key, encoding = "utf8")
 r = readData.read_redis()
 data = r.hgetall(key)
 now_price = eval(data[b'bid0_price'])
-amount_fund = 30
-mul = 2
+amount_fund = 40
+mul = 1.1
 amount_u = amount_fund * mul * 100
 amount_c = amount_fund * mul * 10000
 m = MrBUO(amount_u = amount_u,
@@ -154,4 +179,5 @@ m.initialize()
 print(m.mr)
 print(m.amount)
 print(m.mmr_swap)
+m.run_mmr(play= False)
 print(1)
