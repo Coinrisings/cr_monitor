@@ -1,4 +1,4 @@
-import research, os, datetime, copy
+import os, datetime, copy
 import pandas as pd
 import numpy as np
 import research.utils.pnlDaily as pnl_daily
@@ -6,9 +6,8 @@ from pymongo import MongoClient
 from research.utils.ObjectDataType import AccountData
 from research.eva import eva
 from Mr_DTO import MrDTO
-from research.utils import draw_ssh, readData
-from bokeh.plotting import figure, show
-from bokeh.models.widgets import Panel, Tabs
+from research.utils import readData
+
 class DailyMonitorDTO(object):
     def __init__(self):
         self.init_accounts()
@@ -38,14 +37,18 @@ class DailyMonitorDTO(object):
         return deploy_ids
     
     def get_strategy_info(self, strategy: str):
-        #解析deployd_id的信息
+        """解析deployd_id的信息"""
         words = strategy.split("_")
         master = (words[1] + "_" + words[2]).replace("okex", "okx")
         master = master.replace("uswap", "usdt_swap")
         master = master.replace("cswap", "usd_swap")
+        master = master.replace("ufuture", "usdt_future")
+        master = master.replace("cfuture", "usd_future")
         slave = (words[3] + "_" + words[4]).replace("okex", "okx")
         slave = slave.replace("uswap", "usdt_swap")
         slave = slave.replace("cswap", "usd_swap")
+        slave = slave.replace("ufuture", "usdt_future")
+        slave = slave.replace("cfuture", "usd_future")
         ccy = words[-1].upper()
         if ccy == "U":
             ccy = "USDT"
@@ -56,9 +59,14 @@ class DailyMonitorDTO(object):
         return master, slave, ccy
     
     def get_bbu_info(self, strategy: str):
-        #解析bbu线的deploy_id信息
-        master = "binance_busd_swap"
-        slave = "binance_usdt_swap"
+        """解析bbu线的deploy_id信息"""
+        words = strategy.split("_")
+        exchange = words[1].replace("okex", "okx")
+        if exchange == "binance":
+            master = "binance_busd_swap"
+        else:
+            master = f"{exchange}_usdc_swap"
+        slave = f"{exchange}_usdt_swap"
         ccy = strategy.split("_")[-1].upper()
         if ccy in ["U", "BUSD"]:
             ccy = "USDT"
@@ -98,7 +106,7 @@ class DailyMonitorDTO(object):
         self.accounts = accounts.copy()
     
     def get_account_upnl(self) -> dict:
-        #获得各个账户的upnl，用现在的现货价格减去开仓价格来计算
+        """获得各个账户的upnl，用现在的现货价格减去开仓价格来计算"""
         position = {}
         for account in self.accounts.values():
             if not hasattr(account, "now_position"):
@@ -153,13 +161,44 @@ class DailyMonitorDTO(object):
         equity = data.loc[0, "equity"]
         return equity
 
-    def get_week_profit(self, account) -> float:
+    def get_week_profit(self, account: AccountData) -> float:
         equity = {}
         equity["now"] = self.get_last_equity(account)
         equity["7d"] = self.get_7d_equity(account)
         profit = equity["now"] / equity["7d"] - 1
         return profit
     
+    def get_now_situation(self) -> pd.DataFrame:
+        """get account situation now, like MV%, capital, ccy, mr
+
+        Returns:
+            pd.DataFrame: columns = ["account", "capital", "ccy", "MV", "MV%", "mr", "week_profit"]
+        """
+        accounts = list(self.accounts.values())
+        now_situation = pd.DataFrame(columns = ["account", "capital", "ccy", "MV", "MV%", "mr", "week_profit"], index = range(len(accounts)))
+        for i in now_situation.index:
+            account = accounts[i]
+            account.get_equity()
+            account.get_account_position()
+            account.get_mgnRatio()
+            capital_price = 1 if "USD" in account.principal_currency else account.get_coin_price(coin = account.principal_currency.lower())
+            capital = account.adjEq / capital_price
+            ccy = account.principal_currency
+            mv = sum(account.position["MV"].values)
+            mv_precent = sum(account.position["MV%"].values)
+            mr = account.mr["okex"]
+            profit = self.get_week_profit(account)
+            now_situation.loc[i] = [account.parameter_name, capital, ccy, mv, mv_precent, mr, profit]
+        self.now_situation = now_situation.copy()
+        format_dict = {'capital': lambda x: format(round(x, 4), ","), 
+                        'MV': '{0:.2f}', 
+                        'MV%': '{0:.2f}', 
+                        'mr': lambda x: format(round(x, 2), ","),
+                        'week_profit': '{0:.4%}'
+                            }
+        now_situation = now_situation.style.format(format_dict).background_gradient(cmap='Blues', subset = ["daily_pnl", "daily_pnl%", "MV%", "mr", 'week_profit'])
+        return now_situation
+            
     def run_daily(self) -> pd.DataFrame:
         result, account_overall = self.get_pnl_daily.run_daily_pnl(accounts = list(self.accounts.values()), save_excel = False)
         for i in account_overall.index:

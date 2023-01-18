@@ -1,6 +1,18 @@
 from capital_monitor import CapitalMonitor
-import datetime, time
+import datetime, time, os, yaml
 from daily_monitor import DailyMonitorDTO
+from IPython.display import display
+with open(f"{os.environ['HOME']}/.cryptobridge/private_key.yml", "rb") as f:
+    data = yaml.load(f, Loader= yaml.SafeLoader)
+for info in data:
+    if "mongo" in info.keys():
+        os.environ["MONGO_URI"] = info['mongo']
+        os.environ["INFLUX_URI"] = info['influx']
+        os.environ["INFLUX_MARKET_URI"] = info['influx_market']
+
+daily = DailyMonitorDTO()
+now_situation = daily.get_now_situation()
+display(now_situation)
 
 while True:
     cm  = CapitalMonitor()
