@@ -6,7 +6,8 @@ from Mr_DTF import MrDTF
 import pandas as pd
 
 class DailyMonitorDTF(DailyMonitorDTO):
-    def __init__(self, ignore_test = True):
+    def __init__(self, delivery = "230331",ignore_test = True):
+        self.delivery = delivery
         self.ignore_test = ignore_test
         self.strategy_name = "dt_okex_cfuture_okex_uswap"
         self.init_accounts()
@@ -32,7 +33,7 @@ class DailyMonitorDTF(DailyMonitorDTO):
                             price_u = now_position.loc["btc", "slave_open_price"], 
                             price_c = now_position.loc["btc", "master_open_price"],
                             now_price = now_price, 
-                            suffix= "230331")
+                            suffix= self.delivery)
                 mr_dto.run_mmr(play = False)
                 #保留数据
                 self.mgnRatio[name] = copy.deepcopy(mr_dto)
@@ -45,3 +46,11 @@ class DailyMonitorDTF(DailyMonitorDTO):
         value = value.style.applymap(set_color)
         spread = spread.style.applymap(set_color)
         return value, spread
+    
+    def get_btc_parameter(self):
+        data = self.get_coin_parameter(coin = "btc", suffix=f"-usd-{self.delivery}")
+        self.btc_parameter = data.copy()
+    
+    def get_eth_parameter(self):
+        data = self.get_coin_parameter(coin = "eth", suffix=f"-usd-{self.delivery}")
+        self.eth_parameter = data.copy()

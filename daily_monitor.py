@@ -259,11 +259,11 @@ class DailyMonitorDTO(object):
         funding_summary = result.style.format(format_dict).background_gradient(cmap='Blues')
         return funding_summary
     
-    def get_coin_parameter(self, coin: str) -> pd.DataFrame:
+    def get_coin_parameter(self, coin: str, suffix = "-usd-swap") -> pd.DataFrame:
         data = pd.DataFrame(columns = ["open", "close_maker","position", "close_taker",
                             "open2", "close_maker2", "position2", "close_taker2",
                             "fragment", "fragment_min", "side","funding_fee_loss_stop_open", "funding_fee_profit_stop_close", "timestamp"])
-        contract = f"{coin}-usd-swap"
+        contract = f"{coin}{suffix}"
         for name, account in self.accounts.items():
             origin_data = account.get_now_parameter()
             account.get_now_position()

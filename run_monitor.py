@@ -2,7 +2,6 @@ from capital_monitor import CapitalMonitor
 import datetime, time, os, yaml
 from daily_monitor import DailyMonitorDTO
 from daily_DTFmonitor import DailyMonitorDTF
-from IPython.display import display
 with open(f"{os.environ['HOME']}/.cryptobridge/private_key.yml", "rb") as f:
     data = yaml.load(f, Loader= yaml.SafeLoader)
 for info in data:
@@ -11,9 +10,9 @@ for info in data:
         os.environ["INFLUX_URI"] = info['influx']
         os.environ["INFLUX_MARKET_URI"] = info['influx_market']
 
-daily = DailyMonitorDTF(ignore_test= False)
+daily = DailyMonitorDTF(delivery="230331",ignore_test= False)
+daily.get_btc_parameter()
 now_situation = daily.get_now_situation()
-display(now_situation)
 value, spread = daily.run_mr()
 
 while True:
