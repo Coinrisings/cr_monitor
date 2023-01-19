@@ -9,12 +9,14 @@ from Mr_DTO import MrDTO
 from research.utils import readData
 
 class DailyMonitorDTO(object):
-    def __init__(self):
+    def __init__(self, ignore_test = True):
+        self.ignore_test = ignore_test
+        self.strategy_name = "dt_okex_cswap_okex_uswap"
         self.init_accounts()
         self.get_pnl_daily = pnl_daily
     
     def get_now_parameter(self, deploy_id: str) -> pd.DataFrame:
-        #获得mongo里面相应账户的信息
+        """获得mongo里面相应账户的信息"""
         client = deploy_id.split("_")[0]
         mongo_clt = MongoClient(os.environ["MONGO_URI"])
         a = mongo_clt["Strategy_deploy"][client].find({"_id": deploy_id})
@@ -81,8 +83,13 @@ class DailyMonitorDTO(object):
         for deploy_id in deploy_ids:
             parameter_name, strategy = deploy_id.split("@")
             client, username = parameter_name.split("_")
-            if client not in ["test", "lxy"] and "dt_okex_cswap_okex_uswap" in strategy:
-                #只监控dt-o的实盘账户
+            judgement1 = self.strategy_name in strategy
+            if self.ignore_test:
+                judgement2 = client not in ["test", "lxy"]
+            else:
+                judgement2 = True
+            if judgement1 and judgement2:
+                #只监控dt-o账户
                 master, slave, ccy = self.get_strategy_info(strategy)
                 accounts[parameter_name] = AccountData(
                     username = username,
@@ -224,14 +231,14 @@ class DailyMonitorDTO(object):
             
         self.account_overall = account_overall.copy()
         format_dict = {'capital': lambda x: format(round(x, 4), ","), 
-               'daily_pnl': '{0:.4f}', 
-               'daily_pnl%': '{0:.4%}', 
-               #'规模对应日期':lambda x: "{}".format(x.strftime('%Y%m%d')),
-               'combo_avg': '{0:.4%}', 
-               'MV%': '{0:.2f}', 
-               'mr': lambda x: format(round(x, 2), ","),
-               'week_profit': '{0:.4%}'
-                }
+                        'daily_pnl': '{0:.4f}', 
+                        'daily_pnl%': '{0:.4%}', 
+                        #'规模对应日期':lambda x: "{}".format(x.strftime('%Y%m%d')),
+                        'combo_avg': '{0:.4%}', 
+                        'MV%': '{0:.2f}', 
+                        'mr': lambda x: format(round(x, 2), ","),
+                        'week_profit': '{0:.4%}'
+                        }
         account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = ["daily_pnl", "daily_pnl%", "MV%", "mr", 'week_profit'])
         return account_overall
     
@@ -254,8 +261,8 @@ class DailyMonitorDTO(object):
     
     def get_coin_parameter(self, coin: str) -> pd.DataFrame:
         data = pd.DataFrame(columns = ["open", "close_maker","position", "close_taker",
-                               "open2", "close_maker2", "position2", "close_taker2",
-                              "fragment", "fragment_min", "side","funding_fee_loss_stop_open", "funding_fee_profit_stop_close", "timestamp"])
+                            "open2", "close_maker2", "position2", "close_taker2",
+                            "fragment", "fragment_min", "side","funding_fee_loss_stop_open", "funding_fee_profit_stop_close", "timestamp"])
         contract = f"{coin}-usd-swap"
         for name, account in self.accounts.items():
             origin_data = account.get_now_parameter()
@@ -291,11 +298,9 @@ class DailyMonitorDTO(object):
     def run_mr(self):
         #推算每个账户的mr情况
         self.mgnRatio = {}
-        tabs = []
         self.picture_value = pd.DataFrame()
         self.picture_spread = pd.DataFrame()
         now_price = list(self.accounts.values())[0].get_coin_price(coin = "btc")
-        cols = []
         for name, account in self.accounts.items():
             if not hasattr(account, "now_position"):
                 now_position = account.get_now_position()
