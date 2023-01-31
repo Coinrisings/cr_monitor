@@ -1,9 +1,10 @@
 from daily_monitor import DailyMonitorDTO
 from daily_monitor import set_color
 import research.utils.pnlDaily as pnl_daily
-import copy
+import copy, datetime
 from Mr_DTF import MrDTF
 import pandas as pd
+from research.eva import eva
 
 class DailyMonitorDTF(DailyMonitorDTO):
     def __init__(self, delivery = "230331",ignore_test = True):
@@ -54,3 +55,24 @@ class DailyMonitorDTF(DailyMonitorDTO):
     def get_eth_parameter(self):
         data = self.get_coin_parameter(coin = "eth", suffix=f"-usd-{self.delivery}")
         self.eth_parameter = data.copy()
+    
+    def get_change(self):
+        coins = ["BTC", "ETH"]
+        self.funding_summary, self.funding, _ = eva.run_funding("okex", "spot", "okex", "usdt", datetime.date(2021,1,1), datetime.date.today(), input_coins=coins, play = True)
+        rate = pd.DataFrame()
+        for coin in coins:
+            data = eva.get_last_influx_funding(exchange_name="okex", pair_name=f"{coin.lower()}-usdt-swap")
+            data.rename(columns = {"rate": "current", "next_fee": "next"}, inplace = True)
+            rate = pd.concat([rate, data], axis = 1)
+        self.funding_summary = pd.concat([rate, self.funding_summary])
+        result = copy.deepcopy(self.funding_summary)
+        format_dict = {}
+        for col in result.columns:
+            if col != "vol_24h":
+                result[col] = result[col].apply(lambda x: float(x.split("%")[0])/100)
+                format_dict[col] = '{0:.3%}'
+            else:
+                result[col] = result[col].apply(lambda x: float(x.replace(",", "")) if type(x) == str else np.nan)
+                format_dict[col] = lambda x: format(round(x, 0), ",")
+        funding_summary = result.style.format(format_dict).background_gradient(cmap='Blues')
+        return funding_summary
