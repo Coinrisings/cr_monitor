@@ -191,8 +191,12 @@ class DailyMonitorDTO(object):
             capital_price = 1 if "USD" in account.principal_currency else account.get_coin_price(coin = account.principal_currency.lower())
             capital = account.adjEq / capital_price
             ccy = account.principal_currency
-            mv = sum(account.position["MV"].values)
-            mv_precent = sum(account.position["MV%"].values)
+            if hasattr(account, "position"):
+                mv = sum(account.position["MV"].values)
+                mv_precent = sum(account.position["MV%"].values)
+            else:
+                mv = np.nan
+                mv_precent = np.nan
             mr = account.mr["okex"]
             profit = self.get_week_profit(account)
             now_situation.loc[i] = [account.parameter_name, capital, ccy, mv, mv_precent, mr, profit]
