@@ -59,20 +59,23 @@ class DailyMonitorDTF(DailyMonitorDTO):
     def get_change(self):
         coins = ["BTC", "ETH"]
         self.funding_summary, self.funding, _ = eva.run_funding("okex", "spot", "okex", "usdt", datetime.date(2021,1,1), datetime.date.today(), input_coins=coins, play = True)
-        rate = pd.DataFrame()
+        self.funding_summary.drop("last_dt", inplace = True, axis = 1)
+        self.funding_summary.rename(columns = {"volume_U_24h": "vol_24h"}, inplace = True)
+        self.funding = self.funding.T
+        rate = pd.DataFrame(columns = ["current", "next"])
         for coin in coins:
             data = eva.get_last_influx_funding(exchange_name="okex", pair_name=f"{coin.lower()}-usdt-swap")
             data.rename(columns = {"rate": "current", "next_fee": "next"}, inplace = True)
-            rate = pd.concat([rate, data], axis = 1)
-        self.funding_summary = pd.concat([rate, self.funding_summary])
+            data.drop("dt", inplace = True, axis = 1)
+            data.drop("time", inplace = True, axis = 1)
+            rate.loc[coin] = data.loc[0]
+        self.funding_summary = pd.concat([rate, self.funding_summary], axis = 1)
         result = copy.deepcopy(self.funding_summary)
         format_dict = {}
         for col in result.columns:
             if col != "vol_24h":
-                result[col] = result[col].apply(lambda x: float(x.split("%")[0])/100)
                 format_dict[col] = '{0:.3%}'
             else:
-                result[col] = result[col].apply(lambda x: float(x.replace(",", "")) if type(x) == str else np.nan)
                 format_dict[col] = lambda x: format(round(x, 0), ",")
         funding_summary = result.style.format(format_dict).background_gradient(cmap='Blues')
         return funding_summary
