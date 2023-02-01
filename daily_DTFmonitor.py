@@ -15,7 +15,7 @@ class DailyMonitorDTF(DailyMonitorDTO):
         self.get_pnl_daily = pnl_daily
     
     def run_mr(self):
-        #推算每个账户的mr情况
+        """推算每个账户的mr情况"""
         self.mgnRatio = {}
         self.picture_value = pd.DataFrame()
         self.picture_spread = pd.DataFrame()

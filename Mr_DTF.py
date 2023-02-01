@@ -4,7 +4,7 @@ import ccxt
 class MrDTF(MrDTO):
     """calucate MarginRatio for DT-F, where master is usd-this_quarter and slave is usdt-swap"""
     
-    def __init__(self, amount_u: int, amount_c: int, amount_fund: float, price_u: float, price_c: float, now_price: float, suffix: str,coin="BTC", is_long=True):
+    def __init__(self, amount_u: int, amount_c: int, amount_fund: float, price_u: float, price_c: float, now_price: float, suffix: str, coin="BTC", is_long=False):
         "suffix: delivery date"
         self.suffix = suffix
         super().__init__(amount_u, amount_c, amount_fund, price_u, price_c, now_price, coin, is_long)

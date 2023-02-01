@@ -1,9 +1,11 @@
-import os, datetime, copy
+import os, datetime, copy, sys
+from pathlib import Path
+sys.path.append(os.path.dirname(f"{Path( __file__ ).parent.absolute()}") + "/cr_assis")
 import pandas as pd
 import numpy as np
 import research.utils.pnlDaily as pnl_daily
 from pymongo import MongoClient
-from research.utils.ObjectDataType import AccountData
+from accountBase import AccountBase
 from research.eva import eva
 from Mr_DTO import MrDTO
 from research.utils import readData
@@ -77,7 +79,7 @@ class DailyMonitorDTO(object):
         return master, slave, ccy
     
     def init_accounts(self) -> None:
-        """初始化所有DTO账户"""
+        """初始化所有指定策略线账户"""
         deploy_ids = self.get_all_deploys()
         accounts = {}
         for deploy_id in deploy_ids:
@@ -89,17 +91,9 @@ class DailyMonitorDTO(object):
             else:
                 judgement2 = True
             if judgement1 and judgement2:
-                #只监控dt-o账户
+                #只监控指定策略线账户
                 master, slave, ccy = self.get_strategy_info(strategy)
-                accounts[parameter_name] = AccountData(
-                    username = username,
-                    client = client,
-                    parameter_name = parameter_name,
-                    master = master,
-                    slave = slave,
-                    principal_currency = ccy,
-                    strategy = "funding", 
-                    deploy_id = deploy_id)
+                accounts[parameter_name] = AccountBase(deploy_id = deploy_id)
                 parameter = self.get_now_parameter(deploy_id)
                 path1 = parameter.loc[0, "secret_master"].replace("/", "__")
                 path1 = path1.replace(":", "_")
@@ -168,7 +162,7 @@ class DailyMonitorDTO(object):
         equity = data.loc[0, "equity"]
         return equity
 
-    def get_week_profit(self, account: AccountData) -> float:
+    def get_week_profit(self, account: AccountBase) -> float:
         equity = {}
         equity["now"] = self.get_last_equity(account)
         equity["7d"] = self.get_7d_equity(account)
