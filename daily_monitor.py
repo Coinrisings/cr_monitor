@@ -195,13 +195,11 @@ class DailyMonitorDTO(object):
             profit = self.get_week_profit(account)
             now_situation.loc[i] = [account.parameter_name, capital, ccy, mv, mv_precent, mr, profit]
         self.now_situation = now_situation.copy()
-        format_dict = {'capital': lambda x: format(round(x, 4), ","), 
-                        'MV': '{0:.2f}', 
+        format_dict = { 'MV': '{0:.2f}', 
                         'MV%': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ","),
-                        'week_profit': '{0:.4%}'
-                            }
-        now_situation = now_situation.style.format(format_dict).background_gradient(cmap='Blues', subset = ["MV", "MV%", "mr", 'week_profit'])
+                        'week_profit': '{0:.4%}'}
+        # now_situation = now_situation.style.format(format_dict).background_gradient(cmap='Blues', subset = ["MV", "MV%", "mr", 'week_profit'])
         return now_situation
             
     def run_daily(self) -> pd.DataFrame:

@@ -1,17 +1,20 @@
 from daily_monitor import set_color
 from daily_DTFmonitor import DailyMonitorDTF
 from MrFso_UC import FsoUC
-import research.utils.pnlDaily as pnl_daily
-import copy
+import copy, sys, os
+from pathlib import Path
+sys.path.append(os.path.dirname(f"{Path( __file__ ).parent.absolute()}") + "/cr_monitor")
+from fsoPnl import FsoPnl
 import pandas as pd
+import numpy as np
 
 class DailyFsoUC(DailyMonitorDTF):
     def __init__(self, delivery="230331", ignore_test=True):
         self.delivery = delivery
         self.ignore_test = ignore_test
         self.strategy_name = "dt_okex_uswap_okex_cfuture"
-        self.get_pnl_daily = pnl_daily
         self.init_accounts()
+        self.get_pnl_daily = FsoPnl(accounts = list(self.accounts.values()))
     
     def get_btc_parameter(self):
         data = self.get_coin_parameter(coin = "btc", suffix=f"-usdt-swap")
@@ -54,3 +57,32 @@ class DailyFsoUC(DailyMonitorDTF):
         value = value.style.applymap(set_color)
         spread = spread.style.applymap(set_color)
         return value, spread
+    
+    # def run_daily(self) -> pd.DataFrame:
+    #     self.get_pnl_daily.get_pnl()
+    #     self.get_now_situation() if not hasattr(self, "now_situation") else None
+    #     account_overall = self.now_situation.copy()
+    #     for i in account_overall.index:
+    #         parameter_name = account_overall.loc[i, "account"]
+    #         account = self.accounts[parameter_name]
+    #         account_overall.loc[i, "locked_tpnl"] = account.locked_tpnl[account.principal_currency.lower()]
+    #         account_overall.loc[i, "locked_tpnl%"] = account.locked_tpnl[account.principal_currency.lower()] / account_overall.loc[i, "capital"]
+    #         account_overall.loc[i, "fpnl"] = account.third_pnl[account.principal_currency]
+    #         account_overall.loc[i, "fpnl%"] = account.third_pnl[account.principal_currency] / account_overall.loc[i, "capital"]
+    #     account_overall["tpnl_avg%"] = np.mean(account_overall["locked_tpnl%"])
+    #     account_overall["fpnl_avg%"] = np.mean(account_overall["fpnl%"])
+    #     self.account_overall = account_overall.copy()
+    #     format_dict = {'capital': lambda x: format(round(x, 4), ","), 
+    #                     'locked_tpnl': '{0:.4f}', 
+    #                     'locked_tpnl%': '{0:.4%}', 
+    #                     'fpnl': '{0:.4f}', 
+    #                     'fpnl%': '{0:.4%}', 
+    #                     'tpnl_avg%': '{0:.4f}', 
+    #                     'fpnl_avg%': '{0:.4%}', 
+    #                     'MV%': '{0:.2f}', 
+    #                     'mr': lambda x: format(round(x, 2), ","),
+    #                     'week_profit': '{0:.4%}'
+    #                     }
+    #     account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = 
+    #                     ['locked_tpnl', 'locked_tpnl%', "fpnl", "fpnl%", 'tpnl_avg%','fpnl_avg%', "MV%", "mr", 'week_profit'])
+    #     return account_overall
