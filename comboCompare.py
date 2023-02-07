@@ -11,6 +11,8 @@ class ComboCompare(object):
     
     def __init__(self, trade_fee = 0.0004, interval = "6h") -> None:
         self.coins = ["BTC", "ETH"]
+        self.mul = {"ssf": 1.2, "dt": 2.5, "fs": 2.5}
+        self.interest = 0.03
         self.trade_fee = trade_fee
         self.interval = interval
         self.exchange = "okex"
@@ -89,18 +91,21 @@ class ComboCompare(object):
             self.month_spread[coin] = self.spread_profit[coin] / days * 30
     
     def originze_result(self):
-        result = pd.DataFrame(columns = ["ssf", "dt", "spread", "fs", "feex2"])
+        result = pd.DataFrame(columns = ["ssf", "dt", "spread", "fs", "fee_ssf", "fee_fs"])
         self.get_dt_chance() if not hasattr(self, "dt_chance") else None
         self.get_ssf_chance() if not hasattr(self, "ssf_chance") else None
         self.get_month_spread() if not hasattr(self, "month_spread") else None
         for coin in self.coins:
-            result.loc[coin, "ssf"] = self.ssf_chance.loc[coin, "30d"]
-            result.loc[coin, "dt"] = self.dt_chance.loc[coin, "30d"]
+            result.loc[coin, "ssf"] = (self.ssf_chance.loc[coin, "30d"] - self.interest / 12) * self.mul["ssf"]
+            result.loc[coin, "dt"] = (self.dt_chance.loc[coin, "30d"]) * self.mul["dt"]
             result.loc[coin, "spread"] = self.month_spread[coin]
-            result.loc[coin, "fs"] = result.loc[coin, "spread"] - result.loc[coin, "ssf"] if self.spread[coin] > 1 else result.loc[coin, "spread"] + result.loc[coin, "ssf"]
-        result["feex2"] = self.trade_fee * 2
+            result.loc[coin, "fs"] = result.loc[coin, "spread"] - self.ssf_chance.loc[coin, "30d"] if self.spread[coin] > 1 else result.loc[coin, "spread"] + self.ssf_chance.loc[coin, "30d"]
+        result["fs"] = result["fs"] * self.mul["fs"]
+        result["fee_ssf"] = self.trade_fee * (self.mul["dt"] + self.mul["ssf"])
+        result["fee_fs"] = self.trade_fee * (self.mul["dt"] + self.mul["fs"])
         self.result = result.copy()
+        format_dict = {}
         for col in result.columns:
-            format_dict = {col: '{0:.4f}'}
+            format_dict[col] = '{0:.4%}'
         result = result.style.format(format_dict)
         return result
