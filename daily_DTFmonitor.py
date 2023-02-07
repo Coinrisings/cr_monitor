@@ -95,20 +95,23 @@ class DailyMonitorDTF(DailyMonitorDTO):
             account_overall.loc[i, "locked_tpnl%"] = account.locked_tpnl[account.principal_currency.lower()] / account_overall.loc[i, "capital"]
             account_overall.loc[i, "fpnl"] = account.third_pnl[account.principal_currency]
             account_overall.loc[i, "fpnl%"] = account.third_pnl[account.principal_currency] / account_overall.loc[i, "capital"]
-        account_overall["tpnl_avg%"] = np.mean(account_overall["locked_tpnl%"])
-        account_overall["fpnl_avg%"] = np.mean(account_overall["fpnl%"])
+        funding_sum, _, _ = eva.run_funding("okex", "usdt", "okex", "usd", 
+                                            start_date= datetime.date.today() + datetime.timedelta(days = -7), 
+                                            end_date = datetime.date.today(),
+                                            input_coins=["BTC"], play = False)
+        account_overall["7d"] = funding_sum.loc["BTC", "7d"]
+        account_overall["15d"] = funding_sum.loc["BTC", "15d"]
+        account_overall["30d"] = funding_sum.loc["BTC", "30d"]
         self.account_overall = account_overall.copy()
         format_dict = {'capital': lambda x: format(round(x, 4), ","), 
                         'locked_tpnl': '{0:.4f}', 
                         'locked_tpnl%': '{0:.4%}', 
                         'fpnl': '{0:.4f}', 
                         'fpnl%': '{0:.4%}', 
-                        'tpnl_avg%': '{0:.4f}', 
-                        'fpnl_avg%': '{0:.4%}', 
                         'MV%': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}'
                         }
         account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = 
-                        ['locked_tpnl', 'locked_tpnl%', "fpnl", "fpnl%", 'tpnl_avg%','fpnl_avg%', "MV%", "mr", 'week_profit'])
+                        ['locked_tpnl', 'locked_tpnl%', "fpnl", "fpnl%", "MV%", "mr", 'week_profit'])
         return account_overall
