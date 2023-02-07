@@ -96,7 +96,7 @@ class DailyMonitorDTF(DailyMonitorDTO):
             account_overall.loc[i, "fpnl"] = account.third_pnl[account.principal_currency]
             account_overall.loc[i, "fpnl%"] = account.third_pnl[account.principal_currency] / account_overall.loc[i, "capital"]
         funding_sum, _, _ = eva.run_funding("okex", "usdt", "okex", "usd", 
-                                            start_date= datetime.date.today() + datetime.timedelta(days = -7), 
+                                            start_date= datetime.date.today() + datetime.timedelta(days = -30), 
                                             end_date = datetime.date.today(),
                                             input_coins=["BTC"], play = False)
         account_overall["7d"] = funding_sum.loc["BTC", "7d"]
@@ -110,7 +110,10 @@ class DailyMonitorDTF(DailyMonitorDTO):
                         'fpnl%': '{0:.4%}', 
                         'MV%': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ","),
-                        'week_profit': '{0:.4%}'
+                        'week_profit': '{0:.4%}',
+                       '7d': '{0:.4%}',
+                       '15d': '{0:.4%}',
+                       '30d': '{0:.4%}',
                         }
         account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = 
                         ['locked_tpnl', 'locked_tpnl%', "fpnl", "fpnl%", "MV%", "mr", 'week_profit'])
