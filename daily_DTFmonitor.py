@@ -111,9 +111,9 @@ class DailyMonitorDTF(DailyMonitorDTO):
                         'MV%': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}',
-                       '7d': '{0:.4%}',
-                       '15d': '{0:.4%}',
-                       '30d': '{0:.4%}',
+                        '7d': '{0:.4%}',
+                        '15d': '{0:.4%}',
+                        '30d': '{0:.4%}'
                         }
         account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = 
                         ['locked_tpnl', 'locked_tpnl%', "fpnl", "fpnl%", "MV%", "mr", 'week_profit'])

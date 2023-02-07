@@ -4,6 +4,11 @@ sys.path.append(f"/Users/ssh/Documents/GitHub/cr_assis")
 from load import *
 from daily_FsoUC import DailyFsoUC
 from bokeh.io import output_notebook
+from comboCompare import ComboCompare
+compare = ComboCompare()
+compare.get_month_spread()
+print(compare.month_spread)
+
 output_notebook()
 daily = DailyFsoUC(delivery="230331",ignore_test= False)
 print(f"running time: {datetime.datetime.now()}")
