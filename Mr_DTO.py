@@ -49,14 +49,6 @@ class MrDTO(object):
         with open(os.path.join(cfg_path, 'okex.yml')) as f:
             self.key = yaml.load(f, Loader = yaml.SafeLoader)[0]
         
-    # def load_api(self) -> None:
-    #     #initialize okex api
-    #     self.load_okex_key()
-    #     api_key = self.key["api_key"]
-    #     api_secret_key = self.key["api_secret_key"]
-    #     passphrase = self.key["passphrase"]
-    #     pub = Public_api.PublicAPI(api_key, api_secret_key, passphrase)
-    #     self.api = pub
         
     def get_contractsize(self) -> dict:
         """get contractsize of this coin"""
@@ -104,9 +96,11 @@ class MrDTO(object):
     def get_spot_tier(self) -> dict:
         spot_tier = {}
         for ccy in [self.coin, "USDT"]:
-            data = self.get_tier(instType = "MARGIN", 
+            ret = self.get_tier(instType = "MARGIN", 
                 tdMode = "cross",
-                ccy = ccy)["data"]
+                ccy = ccy)
+            # print(ret)
+            data = ret["data"]
             tier = self.handle_origin_tier(data)
             spot_tier[ccy] = tier.copy()
         return spot_tier
