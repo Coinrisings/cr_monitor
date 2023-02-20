@@ -6,6 +6,24 @@ import pandas as pd
 sys.path.append("/Users/ssh/Documents/GitHub/cr_assis")
 from accountBase import AccountBase
 
+from comboCompare import ComboCompare
+compare = ComboCompare()
+compare.get_spread_profit()
+
+account = AccountBase(deploy_id = "ljw_001@dt_okex_uswap_okex_cfuture_btc")
+now_position = account.get_now_position()
+account.get_equity()
+now_price = account.get_coin_price(coin = "btc")
+#初始化账户
+mr_dto = FsoUC(amount_c = now_position.loc["btc", "slave_number"],
+                amount_u = round(now_position.loc["btc", "master_number"] * 100, 0),
+                amount_fund = account.adjEq / now_price,
+                price_u = now_position.loc["btc", "master_open_price"], 
+                price_c = now_position.loc["btc", "slave_open_price"],
+                now_price = now_price, 
+                suffix = "230331")
+mr_dto.run_mmr(play = False)
+
 add = 2.5
 with open(f"{os.environ['HOME']}/.cryptobridge/private_key.yml", "rb") as f:
     data = yaml.load(f, Loader= yaml.SafeLoader)
