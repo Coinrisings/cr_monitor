@@ -6,14 +6,19 @@ import pandas as pd
 sys.path.append("/Users/ssh/Documents/GitHub/cr_assis")
 from accountBase import AccountBase
 
-from comboCompare import ComboCompare
-compare = ComboCompare()
-compare.get_spread_profit()
-
-account = AccountBase(deploy_id = "ljw_001@dt_okex_uswap_okex_cfuture_btc")
+add = 0.83
+account = AccountBase(deploy_id = "anta_anta001@dt_okex_uswap_okex_cfuture_btc")
 now_position = account.get_now_position()
 account.get_equity()
 now_price = account.get_coin_price(coin = "btc")
+add_value = add * account.adjEq
+add_coin = add_value / now_price
+now_position.loc["btc", "master_number"] += add_coin
+now_position.loc["btc", "slave_number"] += int(add_value / 100)
+now_position.loc["btc", "slave_MV"] += add_value
+now_position.loc["btc", "master_MV"] += add_value
+now_position.loc["btc", "slave_open_price"] = now_position.loc["btc", "slave_MV"] / now_position.loc["btc", "master_number"]
+now_position.loc["btc", "master_open_price"] = now_position.loc["btc", "master_MV"] / now_position.loc["btc", "master_number"]
 #初始化账户
 mr_dto = FsoUC(amount_c = now_position.loc["btc", "slave_number"],
                 amount_u = round(now_position.loc["btc", "master_number"] * 100, 0),
@@ -24,7 +29,6 @@ mr_dto = FsoUC(amount_c = now_position.loc["btc", "slave_number"],
                 suffix = "230331")
 mr_dto.run_mmr(play = False)
 
-add = 2.5
 with open(f"{os.environ['HOME']}/.cryptobridge/private_key.yml", "rb") as f:
     data = yaml.load(f, Loader= yaml.SafeLoader)
 for info in data:

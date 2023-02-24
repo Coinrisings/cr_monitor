@@ -43,12 +43,12 @@ class DailyMonitorDTO(object):
     def get_strategy_info(self, strategy: str):
         """解析deployd_id的信息"""
         words = strategy.split("_")
-        master = (words[1] + "_" + words[2]).replace("okex", "okx")
+        master = (words[1] + "_" + words[2]).replace("okexv5", "okx").replace("okex", "okx")
         master = master.replace("uswap", "usdt_swap")
         master = master.replace("cswap", "usd_swap")
         master = master.replace("ufuture", "usdt_future")
         master = master.replace("cfuture", "usd_future")
-        slave = (words[3] + "_" + words[4]).replace("okex", "okx")
+        slave = (words[3] + "_" + words[4]).replace("okexv5", "okx").replace("okex", "okx")
         slave = slave.replace("uswap", "usdt_swap")
         slave = slave.replace("cswap", "usd_swap")
         slave = slave.replace("ufuture", "usdt_future")
@@ -65,7 +65,7 @@ class DailyMonitorDTO(object):
     def get_bbu_info(self, strategy: str):
         """解析bbu线的deploy_id信息"""
         words = strategy.split("_")
-        exchange = words[1].replace("okex", "okx")
+        exchange = words[1].replace("okexv5", "okx").replace("okex", "okx")
         if exchange == "binance":
             master = "binance_busd_swap"
         else:

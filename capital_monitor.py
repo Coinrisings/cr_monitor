@@ -1,26 +1,54 @@
 from research.utils import readData
 from research.utils.ObjectDataType import AccountData
 from daily_monitor import DailyMonitorDTO
-import yaml, os, json, requests, datetime, copy
+import yaml, os, json, requests, datetime, copy, logging, traceback
 from announcement import ExchangeAnnouncement
 
 class CapitalMonitor(DailyMonitorDTO):
-    def __init__(self):
+    def __init__(self, log_path = os.environ['HOME'] + "/data/cr_monitor"):
         super().__init__()
+        self.log_path = log_path
         self.load_dingding()
         self.announ = ExchangeAnnouncement()
-        self.warning_hedge = {"value": 0, "amount": 0}
-        self.warning_rebalance = 0
+        self.load_combo_people()
+        self.load_logger()
+        self.warning_hedge = {"value": 50, "amount": 10}
+        self.warning_rebalance = 1
         self.warning_account = {"ssh": [],
-                                "brad": [],
                                 "yyz": [],
                                 "scq": []}
+    
+    def load_logger(self):
+        Log_Format = "%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s"
+        today = str(datetime.date.today()) 
+        path = self.log_path
+        path_save = f"{path}/logs/"
+        
+        if not os.path.exists(path_save):
+            os.makedirs(path_save)
+        file_name = f"{path_save}{today}.log"
+        logger = logging.getLogger(__name__)
+        logger.setLevel(level = logging.DEBUG)
+        handler = logging.FileHandler(filename=file_name, encoding= "UTF-8")
+        handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(Log_Format)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        self.logger = logger
+    
+    def load_combo_people(self):
         combo_people = {
             "okx_usd_swap-okx_usdt_swap": "ssh",
-            "gate_spot-gate_usdt_swap": "brad",
+            'okx_usd_future-okx_usdt_swap': "ssh",
+            'okx_usdt_swap-okx_usd_future': "ssh",
+            'okx_spot-okx_usdt_swap': "ssh",
+            "gate_spot-gate_usdt_swap": "yyz",
             "gate_usdt_swap-okx_usdt_swap": "yyz",
             "binance_busd_swap-binance_usdt_swap": "scq"
         }
+        for account in self.accounts.values():
+            if account.combo not in combo_people.keys():
+                combo_people[account.combo] = "ssh"
         self.combo_people = combo_people
     
     def get_exchange_people(self) -> None:
@@ -36,6 +64,7 @@ class CapitalMonitor(DailyMonitorDTO):
                 else:
                     pass
         self.exchange_people = exchange_people
+        self.logger.info(f"exchange people: {exchange_people}")
     
     def load_dingding(self) -> None:
         user_path = os.path.expanduser('~')
@@ -71,7 +100,7 @@ class CapitalMonitor(DailyMonitorDTO):
         self.accounts = accounts.copy()
     
     def get_coins(self) -> None:
-        #获得数据库里面所有需要对冲币种的名称
+        """获得数据库里面所有需要对冲币种的名称"""
         a = """SHOW FIELD KEYS FROM "pnl_hedge" """
         data = readData.read_influx(a, db = "ephemeral")
         coins = list(data["fieldKey"].values)
@@ -86,6 +115,7 @@ class CapitalMonitor(DailyMonitorDTO):
         for coin in self.coins:
             coins_str = coins_str + '"' + coin + '"' +","
         self.coins_str = coins_str[:-1]
+        self.logger.info(f"coins str: {self.coins_str}")
     
     def get_cashbalance(self, account):
         a = f"""select {self.coins_str} from "pnl_hedge" where deploy_id = '{account.deploy_id}' and time > now() - 1h """
@@ -117,6 +147,7 @@ class CapitalMonitor(DailyMonitorDTO):
         warning_account = copy.deepcopy(self.warning_account)
         for name, account in self.accounts.items():
             self.get_cashbalance(account)
+            self.logger.info(f"cashbalance of {account.parameter_name}: {account.cashbalance}")
             amount_plus = len(account.cashbalance[account.cashbalance["total"] > self.warning_hedge["value"]])
             if amount_plus > self.warning_hedge["value"]:
                 warning_people = self.combo_people[account.combo]
@@ -136,10 +167,11 @@ class CapitalMonitor(DailyMonitorDTO):
                 }
                 self.send_dingding(data)
             else:
-                pass
+                data = {}
+            self.logger.info(f"run monitor pnl send info: {data}")
     
     def find_af_accounts(self) -> None:
-        #找到跨所账户
+        """找到跨所账户"""
         af_accounts = {}
         for name, account in self.accounts.items():
             if account.exchange_master != account.exchange_slave:
@@ -147,14 +179,16 @@ class CapitalMonitor(DailyMonitorDTO):
             else:
                 pass
         self.af_accounts = af_accounts
+        self.logger.info(f"af account: {af_accounts}")
     
     def load_af_config(self) -> None:
-        #设置转账config
+        """设置转账config"""
         data = {"balance": {"okx_usdt_swap-binance_usdt_swap": 1,
                             "okx_usd_swap-binance_usdt_swap": 1,
                             "gate_usdt_swap-okx_usdt_swap": 1},
-               "balance_limit": 0.5}
+            "balance_limit": 0.1}
         self.af_config = data
+        self.logger.info(f"af config: {data}")
     
     def get_bilateral_assets(self, account) -> None:
         #获得两边的资产
@@ -186,11 +220,12 @@ class CapitalMonitor(DailyMonitorDTO):
                 
             else:
                 now_position = account.now_position
-            print(f"get {account.parameter_name} position")
+            self.logger.info(f"get {account.parameter_name} position")
             coins = set(now_position.index.values)
             people = self.combo_people[account.combo]
             people_coins[people] = people_coins[people] | coins
         self.people_coins = people_coins
+        self.logger.info(f"people coins: {people_coins}")
                     
     def run_monitor_assets(self):
         self.load_af_config()
@@ -218,13 +253,15 @@ class CapitalMonitor(DailyMonitorDTO):
                 }
                 self.send_dingding(data)
             else:
-                pass
+                data = {}
+            self.logger.info(f"run monitor assests send info: {data}")
         
     def run_monitor_delist(self):
         self.get_exchange_people()
         self.get_people_coins()
         self.announ.get_delist_coins()
         delist_coins = self.announ.delist_coins
+        self.logger.info(f"delist coins: {delist_coins}")
         for exchange, coins in delist_coins.items():
             if len(coins) > 0:
                 mobiles = []
@@ -233,15 +270,29 @@ class CapitalMonitor(DailyMonitorDTO):
                         mobiles.append(self.dingding_config[people])
                     else:
                         pass
-                if mobiles == []:
-                    mobiles.append(self.dingding_config['ssh'])
-                data = {
-                    "msgtype": "text",
-                    "text": {"content": f"""[AM]-[DelistWarning] \n {exchange} 的 {coins} 近期有下架公告 {self.announ.url_config[exchange]}\n时间：{datetime.datetime.now()}"""},
-                    "at": {
-                        "atMobiles": mobiles,
-                        "isAtAll": False}
-                }
-                self.send_dingding(data)
+                if mobiles != []:
+                    data = {
+                        "msgtype": "text",
+                        "text": {"content": f"""[AM]-[DelistWarning] \n {exchange} 的 {coins} 近期有下架公告 {self.announ.url_config[exchange]}\n时间：{datetime.datetime.now()}"""},
+                        "at": {
+                            "atMobiles": mobiles,
+                            "isAtAll": False}
+                    }
+                    self.send_dingding(data)
+                else:
+                    data = {}
+                self.logger.info(f"delist coins send info: {data}")
     
+    def run_monitor(self):
+        self.logger.info("Start !!!!!!!!!!!!!!")
+        try:
+            if datetime.datetime.utcnow().hour == 2:
+                self.run_monitor_delist()
+            self.run_monitor_assets()
+            self.run_monitor_pnl()
+            self.logger.info("End !!!!!!!!!!!!!!!")
+        except Exception as e:
+            self.logger.critical(e)
+            self.logger.critical(traceback.format_exc())
+        self.logger.handlers.clear()
 
