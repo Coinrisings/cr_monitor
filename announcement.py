@@ -131,11 +131,11 @@ class ExchangeAnnouncement(object):
                 is_delist, delist_token = self.analyze_title(title)
                 if is_delist:
                     delist_coins[exchange] = delist_coins[exchange] | delist_token
-                    if len(delist_token) == 0:
-                        #没有解析出delist的币种
-                        delist_coins[exchange].add("all")
-                    else:
-                        pass
+                    # if len(delist_token) == 0:
+                    #     #没有解析出delist的币种
+                    #     delist_coins[exchange].add("all")
+                    # else:
+                    #     pass
                 else:
                     pass
         if "OKX" in delist_coins["okex"]:
