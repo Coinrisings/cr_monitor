@@ -10,10 +10,10 @@ for info in data:
         os.environ["INFLUX_URI"] = info['influx']
         os.environ["INFLUX_MARKET_URI"] = info['influx_market']
 
-daily = DailyMonitorDTF(delivery="230331",ignore_test= False)
-daily.get_btc_parameter()
-now_situation = daily.get_now_situation()
-value, spread = daily.run_mr()
+# daily = DailyMonitorDTF(delivery="230331",ignore_test= False)
+# daily.get_btc_parameter()
+# now_situation = daily.get_now_situation()
+# value, spread = daily.run_mr()
 
 while True:
     cm  = CapitalMonitor()
