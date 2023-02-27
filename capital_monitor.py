@@ -44,6 +44,7 @@ class CapitalMonitor(DailyMonitorDTO):
             'okx_spot-okx_usdt_swap': "ssh",
             "gate_spot-gate_usdt_swap": "yyz",
             "gate_usdt_swap-okx_usdt_swap": "yyz",
+            "binance_usdc_swap-binance_usdt_swap": "yyz",
             "binance_busd_swap-binance_usdt_swap": "scq"
         }
         for account in self.accounts.values():
@@ -186,7 +187,7 @@ class CapitalMonitor(DailyMonitorDTO):
         data = {"balance": {"okx_usdt_swap-binance_usdt_swap": 1,
                             "okx_usd_swap-binance_usdt_swap": 1,
                             "gate_usdt_swap-okx_usdt_swap": 1},
-            "balance_limit": 0.1}
+            "balance_limit": 0.2}
         self.af_config = data
         self.logger.info(f"af config: {data}")
     
@@ -286,7 +287,8 @@ class CapitalMonitor(DailyMonitorDTO):
     def run_monitor(self):
         self.logger.info("Start !!!!!!!!!!!!!!")
         try:
-            if datetime.datetime.utcnow().hour == 2:
+            if True:
+            # if datetime.datetime.utcnow().hour == 2:
                 self.run_monitor_delist()
             self.run_monitor_assets()
             self.run_monitor_pnl()

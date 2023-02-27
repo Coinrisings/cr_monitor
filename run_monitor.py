@@ -8,5 +8,5 @@ for info in data:
         os.environ["INFLUX_URI"] = info['influx']
         os.environ["INFLUX_MARKET_URI"] = info['influx_market']
 
-cm  = CapitalMonitor()
+cm  = CapitalMonitor(log_path = "/mnt/efs/fs1/data_ssh")
 cm.run_monitor()
