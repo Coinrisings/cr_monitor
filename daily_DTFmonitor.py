@@ -92,9 +92,10 @@ class DailyMonitorDTF(DailyMonitorDTO):
             parameter_name = account_overall.loc[i, "account"]
             account = self.accounts[parameter_name]
             account_overall.loc[i, "locked_tpnl"] = sum(account.locked_tpnl.values())
-            account_overall.loc[i, "locked_tpnl%"] = account_overall.loc[i, "locked_tpnl"] / account_overall.loc[i, "capital"]
-            account_overall.loc[i, "fpnl"] = account.third_pnl[account.principal_currency]
-            account_overall.loc[i, "fpnl%"] = account.third_pnl[account.principal_currency] / account_overall.loc[i, "capital"]
+            account_overall.loc[i, "locked_tpnl%"] = account_overall.loc[i, "locked_tpnl"] / account.adjEq
+            account_overall.loc[i, "rpnl"] = account.third_pnl[account.principal_currency]
+            account_overall.loc[i, "rpnl%"] = account.third_pnl[account.principal_currency] / account_overall.loc[i, "capital"]
+            account_overall.loc[i, "pay_back%"] = (account_overall.loc[i, "locked_tpnl%"] + account_overall.loc[i, "rpnl%"]) / (account_overall.loc[i, "MV%"] / 100)
         funding_sum, _, _ = eva.run_funding("okex", "usdt", "okex", "usd", 
                                             start_date= datetime.date.today() + datetime.timedelta(days = -30), 
                                             end_date = datetime.date.today(),
@@ -106,8 +107,9 @@ class DailyMonitorDTF(DailyMonitorDTO):
         format_dict = {'capital': lambda x: format(round(x, 4), ","), 
                         'locked_tpnl': '{0:.4f}', 
                         'locked_tpnl%': '{0:.4%}', 
-                        'fpnl': '{0:.4f}', 
-                        'fpnl%': '{0:.4%}', 
+                        'rpnl': '{0:.4f}', 
+                        'rpnl%': '{0:.4%}', 
+                        'pay_back%': '{0:.4%}', 
                         'MV%': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}',
@@ -116,5 +118,5 @@ class DailyMonitorDTF(DailyMonitorDTO):
                         '30d': '{0:.4%}'
                         }
         account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = 
-                        ['locked_tpnl', 'locked_tpnl%', "fpnl", "fpnl%", "MV%", "mr", 'week_profit'])
+                        ['locked_tpnl', 'locked_tpnl%', "rpnl", "rpnl%", "pay_back%", "MV%", "mr", 'week_profit'])
         return account_overall
