@@ -91,8 +91,8 @@ class DailyMonitorDTF(DailyMonitorDTO):
         for i in account_overall.index:
             parameter_name = account_overall.loc[i, "account"]
             account = self.accounts[parameter_name]
-            account_overall.loc[i, "locked_tpnl"] = account.locked_tpnl[account.principal_currency.lower()]
-            account_overall.loc[i, "locked_tpnl%"] = account.locked_tpnl[account.principal_currency.lower()] / account_overall.loc[i, "capital"]
+            account_overall.loc[i, "locked_tpnl"] = sum(account.locked_tpnl.values())
+            account_overall.loc[i, "locked_tpnl%"] = account_overall.loc[i, "locked_tpnl"] / account_overall.loc[i, "capital"]
             account_overall.loc[i, "fpnl"] = account.third_pnl[account.principal_currency]
             account_overall.loc[i, "fpnl%"] = account.third_pnl[account.principal_currency] / account_overall.loc[i, "capital"]
         funding_sum, _, _ = eva.run_funding("okex", "usdt", "okex", "usd", 

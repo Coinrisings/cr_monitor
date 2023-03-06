@@ -5,5 +5,7 @@ from load import *
 from daily_FsoUC import DailyFsoUC
 from bokeh.io import output_notebook
 from comboCompare import ComboCompare
-compare = ComboCompare()
-compare.get_month_spread()
+from daily_FsoUC import DailyFsoUC
+daily = DailyFsoUC(delivery="230331",ignore_test= True)
+account_overall = daily.run_daily()
+account_overall
