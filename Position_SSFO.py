@@ -1,13 +1,17 @@
-import ccxt, requests
+import ccxt, requests, sys, os, influxdb
 import pandas as pd
+from pathlib import Path
+sys.path.append(os.path.dirname(f"{Path( __file__ ).parent.absolute()}") + "/cr_assis")
+from connectData import ConnectData
 
 class PositionSSFO(object):
     """Define the position information of SSFO"""
     
-    def __init__(self, amount_master: dict, amount_slave: dict, price_slave: dict) -> None:
+    def __init__(self, amount_master={}, amount_slave={}, price_slave={}) -> None:
         self.master = "spot"
         self.slave = "usdt_swap"
         self.markets = ccxt.okex().load_markets()
+        self.database = ConnectData()
         self.amount_master = amount_master # the amount of spot assets. A positive number means long while negative number means short.
         self.amount_slave = amount_slave # the amount of contracts
         self.price_slave = price_slave # the average price of slave in holding position
@@ -53,3 +57,34 @@ class PositionSSFO(object):
             tier = self.handle_origin_tier(data)
             tier_slave[coin] = tier.copy()
         self.tier_slave = tier_slave
+    
+    def get_origin_slave(self, client: str, username: str, start: str, end: str) -> influxdb.resultset.ResultSet:
+        sql = f"""
+        select ex_field, time, exchange, long, long_open_price, settlement, last(short) as short, short_open_price, pair from position
+        where client = '{client}' and username = '{username}' and time > {start} and time < {end} and (long >0 or short >0)
+        and ex_field = 'swap'
+        group by time(1m), pair ORDER BY time
+        """
+        ret = self.database._send_influx_query(sql = sql, database = "account_data", is_dataFrame= False)
+        result = {}
+        for info in ret.keys():
+            result[info[1]['pair']] = pd.DataFrame(ret[info])
+        self.origin_slave = result
+        return result
+    
+    def load_spot_price(self):
+        self.database.load_redis()
+        self.redis_clt = self.database.redis_clt
+    
+    def get_spot_price(self, coin: str) -> float:
+        self.load_spot_price() if not hasattr(self, "redis_clt") else None
+        key = bytes(f"okexv5/{coin}-usdt", encoding="utf8")
+        price = float(self.redis_clt.hgetall(key)[b'bid0_price'])
+        return price
+    
+    def get_slave_mv(self):
+        for pair, data in self.origin_slave.items():
+            coin = pair.split('-')[0]
+            price = self.get_spot_price(coin)
+            data["mv"] = (data['short'] + data['long']) * price
+    

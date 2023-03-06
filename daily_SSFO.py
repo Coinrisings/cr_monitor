@@ -2,7 +2,7 @@ from daily_monitor import set_color
 from daily_DTFmonitor import DailyMonitorDTF
 import copy, sys, os, datetime
 from pathlib import Path
-sys.path.append(os.path.dirname(f"{Path( __file__ ).parent.absolute()}") + "/cr_monitor")
+sys.path.append(os.path.dirname(f"{Path( __file__ ).parent.absolute()}") + "/cr_assis")
 from fsoPnl import FsoPnl
 import pandas as pd
 import numpy as np
