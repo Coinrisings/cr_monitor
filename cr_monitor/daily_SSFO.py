@@ -1,7 +1,7 @@
 from cr_monitor.daily_monitor import set_color
 from cr_monitor.daily_DTFmonitor import DailyMonitorDTF
 import copy, sys, os, datetime
-from cr_assis.fsoPnl import FsoPnl
+from cr_assis.ssfoPnl import SsfoPnl
 import pandas as pd
 import numpy as np
 from research.eva import eva
@@ -11,7 +11,7 @@ class DailySSFO(DailyMonitorDTF):
         self.ignore_test = ignore_test
         self.strategy_name = "ssf_okexv5_spot_okexv5_uswap_btc"
         self.init_accounts()
-        self.get_pnl_daily = FsoPnl(accounts = list(self.accounts.values()))
+        self.get_pnl_daily = SsfoPnl(accounts = list(self.accounts.values()))
     
     def get_change(self):
         self.funding_summary, self.funding, _ = eva.run_funding("okex", "spot", "okex", "usdt", datetime.date.today() + datetime.timedelta(days = -31), datetime.date.today(), play = False)
@@ -48,36 +48,21 @@ class DailySSFO(DailyMonitorDTF):
         funding_summary = result.style.format(format_dict)
         return funding_summary
     
-    def run_mr(self):
-        """推算每个账户的mr情况"""
-        self.mgnRatio = {}
-        self.picture_value = pd.DataFrame()
-        self.picture_spread = pd.DataFrame()
-        now_price = list(self.accounts.values())[0].get_coin_price(coin = "btc")
-        for name, account in self.accounts.items():
-            if not hasattr(account, "now_position"):
-                now_position = account.get_now_position()
-            else:
-                now_position = account.now_position
-            if "btc" in now_position.index:
-                account.get_equity()
-                #初始化账户
-                mr_dto = FsoUC(amount_c = now_position.loc["btc", "slave_number"],
-                                amount_u = round(now_position.loc["btc", "master_number"] * 100, 0),
-                                amount_fund = account.adjEq / now_price,
-                                price_u = now_position.loc["btc", "master_open_price"], 
-                                price_c = now_position.loc["btc", "slave_open_price"],
-                                now_price = now_price, 
-                                suffix = self.delivery)
-                mr_dto.run_mmr(play = False)
-                #保留数据
-                self.mgnRatio[name] = copy.deepcopy(mr_dto)
-                self.picture_value = pd.concat([mr_dto.value_influence, self.picture_value], axis = 1, join = 'outer')
-                self.picture_spread = pd.concat([mr_dto.spread_influence, self.picture_spread], axis = 1, join = 'outer')
-                self.picture_value.rename({"mr": name}, inplace = True, axis = 1)
-                self.picture_spread.rename({"mr": name}, inplace = True, axis = 1)
-        value = copy.deepcopy(self.picture_value)
-        spread = copy.deepcopy(self.picture_spread)
-        value = value.style.applymap(set_color)
-        spread = spread.style.applymap(set_color)
-        return value, spread
+    def run_daily(self) -> pd.DataFrame:
+        rpnl = self.get_pnl_daily.get_rpnl()
+        self.get_now_situation() if not hasattr(self, "now_situation") else None
+        account_overall = self.now_situation.copy()
+        for i in account_overall.index:
+            parameter_name = account_overall.loc[i, "account"]
+            account = self.accounts[parameter_name]
+            for day in [1, 3, 7]:
+                account_overall.loc[i, f"{day}d_rpnl%"] = rpnl[parameter_name][day]
+        self.account_overall = account_overall.copy()
+        format_dict = {'capital': lambda x: format(round(x, 4), ","), 
+                        'rpnl%': '{0:.4%}', 
+                        'MV%': '{0:.2f}', 
+                        'mr': lambda x: format(round(x, 2), ","),
+                        'week_profit': '{0:.4%}',
+                        }
+        account_overall = account_overall.style.format(format_dict)
+        return account_overall
