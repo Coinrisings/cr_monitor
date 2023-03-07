@@ -1,9 +1,9 @@
-from daily_monitor import DailyMonitorDTO
-from daily_monitor import set_color
+from cr_monitor.daily_monitor import DailyMonitorDTO
+from cr_monitor.daily_monitor import set_color
 import copy, sys, os
 from cr_assis.dtfPnl import DtfPnl
 import copy, datetime
-from Mr_DTF import MrDTF
+from cr_monitor.Mr_DTF import MrDTF
 import pandas as pd
 import numpy as np
 from research.eva import eva

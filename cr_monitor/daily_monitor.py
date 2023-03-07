@@ -5,7 +5,7 @@ import research.utils.pnlDaily as pnl_daily
 from pymongo import MongoClient
 from cr_assis.accountBase import AccountBase
 from research.eva import eva
-from Mr_DTO import MrDTO
+from cr_monitor.Mr_DTO import MrDTO
 from research.utils import readData
 
 class DailyMonitorDTO(object):

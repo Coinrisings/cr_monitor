@@ -1,5 +1,5 @@
-from daily_monitor import set_color
-from daily_DTFmonitor import DailyMonitorDTF
+from cr_monitor.daily_monitor import set_color
+from cr_monitor.daily_DTFmonitor import DailyMonitorDTF
 import copy, sys, os, datetime
 from cr_assis.fsoPnl import FsoPnl
 import pandas as pd
