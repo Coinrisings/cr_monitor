@@ -50,6 +50,7 @@ class DailySSFO(DailyMonitorDTF):
     
     def run_daily(self) -> pd.DataFrame:
         rpnl = self.get_pnl_daily.get_rpnl()
+        fpnl = self.get_pnl_daily.get_fpnl()
         self.get_now_situation() if not hasattr(self, "now_situation") else None
         account_overall = self.now_situation.copy()
         for i in account_overall.index:
@@ -57,12 +58,18 @@ class DailySSFO(DailyMonitorDTF):
             account = self.accounts[parameter_name]
             for day in [1, 3, 7]:
                 account_overall.loc[i, f"{day}d_rpnl%"] = rpnl[parameter_name][day]
+                account_overall.loc[i, f"{day}d_fpnl%"] = fpnl[parameter_name][day]
         self.account_overall = account_overall.copy()
         format_dict = {'capital': lambda x: format(round(x, 4), ","), 
-                        'rpnl%': '{0:.4%}', 
+                        '1d_rpnl%': '{0:.4%}', 
+                        '3d_rpnl%': '{0:.4%}', 
+                        '7d_rpnl%': '{0:.4%}', 
+                       '1d_fpnl%': '{0:.4%}', 
+                        '3d_fpnl%': '{0:.4%}', 
+                        '7d_fpnl%': '{0:.4%}', 
                         'MV%': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}',
                         }
-        account_overall = account_overall.style.format(format_dict)
+        account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = ["MV", "MV%", "mr", 'week_profit','1d_rpnl%', '3d_rpnl%', '7d_rpnl%','1d_fpnl%', '3d_fpnl%', '7d_fpnl%'])
         return account_overall
