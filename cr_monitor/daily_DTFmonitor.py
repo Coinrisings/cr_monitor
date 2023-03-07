@@ -1,9 +1,7 @@
 from daily_monitor import DailyMonitorDTO
 from daily_monitor import set_color
 import copy, sys, os
-from pathlib import Path
-sys.path.append(os.path.dirname(f"{Path( __file__ ).parent.absolute()}") + "/cr_monitor")
-from dtfPnl import DtfPnl
+from cr_assis.dtfPnl import DtfPnl
 import copy, datetime
 from Mr_DTF import MrDTF
 import pandas as pd

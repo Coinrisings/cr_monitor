@@ -1,8 +1,6 @@
 import ccxt, requests, sys, os, influxdb
 import pandas as pd
-from pathlib import Path
-sys.path.append(os.path.dirname(f"{Path( __file__ ).parent.absolute()}") + "/cr_assis")
-from connectData import ConnectData
+from cr_assis.connectData import ConnectData
 
 class PositionSSFO(object):
     """Define the position information of SSFO"""

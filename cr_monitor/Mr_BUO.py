@@ -3,9 +3,8 @@ import ccxt, os
 from research.utils import readData
 import numpy as np
 import pandas as pd
+from cr_assis.load import *
 
-os.environ["MONGO_URI"] = 'mongodb://read_only:Abcd1234@10.1.1.254:3717/?authSource=admin'
-os.environ["INFLUX_URI"] = 'program:Coinrising1234@www.tooook.com:28086'
 class MrBUO(MrDTO):
     """MrBUO: calucate MarginRatio for BU in okex, which means master is okex-usdc-swap and slave is okex-usdt-swap。
     position and assest coin have to be the same.

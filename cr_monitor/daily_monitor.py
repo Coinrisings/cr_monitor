@@ -1,11 +1,9 @@
 import os, datetime, copy, sys
-from pathlib import Path
-sys.path.append(os.path.dirname(f"{Path( __file__ ).parent.absolute()}") + "/cr_assis")
 import pandas as pd
 import numpy as np
 import research.utils.pnlDaily as pnl_daily
 from pymongo import MongoClient
-from accountBase import AccountBase
+from cr_assis.accountBase import AccountBase
 from research.eva import eva
 from Mr_DTO import MrDTO
 from research.utils import readData

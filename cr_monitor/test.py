@@ -1,10 +1,8 @@
 import sys, os, datetime, glob, time, math, configparser, json, yaml
 import pandas as pd
-sys.path.append(f"/Users/ssh/Documents/GitHub/cr_monitor")
-sys.path.append(f"/Users/ssh/Documents/GitHub/cr_assis")
-from load import *
+from cr_assis.load import *
 from Position_SSFO import PositionSSFO
-from accountBase import AccountBase
+from cr_assis.accountBase import AccountBase
 position_ssfo = PositionSSFO()
 bg001 = AccountBase(deploy_id= "bg_001@ssf_okexv5_spot_okexv5_uswap_btc")
 bg001.position_ssfo = position_ssfo

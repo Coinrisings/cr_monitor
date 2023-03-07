@@ -2,9 +2,7 @@ from research.eva import eva
 import pandas as pd
 import numpy as np
 import datetime, sys, os
-from pathlib import Path
-sys.path.append(os.path.dirname(f"{Path( __file__ ).parent.absolute()}") + "/cr_assis")
-from connectData import ConnectData
+from cr_assis.connectData import ConnectData
 
 class ComboCompare(object):
     """compare different comboes' chance in okex"""

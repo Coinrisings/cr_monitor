@@ -3,8 +3,7 @@ from Mr_DTO import MrDTO
 from MrFso_UC import FsoUC
 import os, yaml, sys
 import pandas as pd
-sys.path.append("/Users/ssh/Documents/GitHub/cr_assis")
-from accountBase import AccountBase
+from cr_assis.accountBase import AccountBase
 
 add = 0.83
 account = AccountBase(deploy_id = "anta_anta001@dt_okex_uswap_okex_cfuture_btc")
