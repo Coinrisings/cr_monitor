@@ -1,6 +1,6 @@
 import ccxt, requests, sys, os, influxdb
 import pandas as pd
-from cr_assis.connectData import ConnectData
+from cr_assis.connect.connectData import ConnectData
 
 class PositionSSFO(object):
     """Define the position information of SSFO"""

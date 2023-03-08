@@ -1,4 +1,4 @@
-from Mr_DTO import MrDTO
+from cr_monitor.mr.Mr_DTO import MrDTO
 import ccxt, os
 from research.utils import readData
 import numpy as np

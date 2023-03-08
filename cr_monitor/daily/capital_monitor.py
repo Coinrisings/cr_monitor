@@ -1,6 +1,6 @@
 from research.utils import readData
 from research.utils.ObjectDataType import AccountData
-from daily_monitor import DailyMonitorDTO
+from cr_monitor.daily.daily_monitor import DailyMonitorDTO
 import yaml, os, json, requests, datetime, copy, logging, traceback
 from cr_monitor.connect.announcement import ExchangeAnnouncement
 

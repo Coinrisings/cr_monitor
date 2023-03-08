@@ -2,7 +2,7 @@ from cr_monitor.daily.daily_monitor import set_color
 from cr_monitor.daily.daily_DTFmonitor import DailyMonitorDTF
 from cr_monitor.mr.MrFso_UC import FsoUC
 import copy, sys, os
-from cr_assis.fsoPnl import FsoPnl
+from cr_assis.pnl.fsoPnl import FsoPnl
 import pandas as pd
 import numpy as np
 

@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import research.utils.pnlDaily as pnl_daily
 from pymongo import MongoClient
-from cr_assis.connectData import ConnectData
-from cr_assis.accountBase import AccountBase
+from cr_assis.connect.connectData import ConnectData
+from cr_assis.account.accountBase import AccountBase
 from research.eva import eva
 from cr_monitor.mr.Mr_DTO import MrDTO
 

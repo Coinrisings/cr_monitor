@@ -1,4 +1,4 @@
-from cr_monitor.Mr_DTO import MrDTO
+from cr_monitor.mr.Mr_DTO import MrDTO
 import ccxt
 
 class MrDTF(MrDTO):

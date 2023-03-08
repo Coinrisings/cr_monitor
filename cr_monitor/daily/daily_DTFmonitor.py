@@ -1,7 +1,8 @@
 from cr_monitor.daily.daily_monitor import DailyMonitorDTO
 from cr_monitor.daily.daily_monitor import set_color
+from cr_assis.connect.connectData import ConnectData
 import copy, sys, os
-from cr_assis.dtfPnl import DtfPnl
+from cr_assis.pnl.dtfPnl import DtfPnl
 import copy, datetime
 from cr_monitor.mr.Mr_DTF import MrDTF
 import pandas as pd
@@ -12,6 +13,7 @@ class DailyMonitorDTF(DailyMonitorDTO):
     def __init__(self, delivery = "230331",ignore_test = True):
         self.delivery = delivery
         self.ignore_test = ignore_test
+        self.database = ConnectData()
         self.strategy_name = "dt_okex_cfuture_okex_uswap"
         self.init_accounts()
         self.get_pnl_daily = DtfPnl(accounts = list(self.accounts.values()))

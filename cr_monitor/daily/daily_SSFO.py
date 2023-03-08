@@ -1,7 +1,8 @@
-from cr_monitor.daily_monitor import set_color
-from cr_monitor.daily_DTFmonitor import DailyMonitorDTF
+from cr_monitor.daily.daily_monitor import set_color
+from cr_monitor.daily.daily_DTFmonitor import DailyMonitorDTF
+from cr_assis.connect.connectData import ConnectData
 import copy, sys, os, datetime
-from cr_assis.ssfoPnl import SsfoPnl
+from cr_assis.pnl.ssfoPnl import SsfoPnl
 import pandas as pd
 import numpy as np
 from research.eva import eva
@@ -9,6 +10,7 @@ from research.eva import eva
 class DailySSFO(DailyMonitorDTF):
     def __init__(self, ignore_test=True):
         self.ignore_test = ignore_test
+        self.database = ConnectData()
         self.strategy_name = "ssf_okexv5_spot_okexv5_uswap_btc"
         self.init_accounts()
         self.get_pnl_daily = SsfoPnl(accounts = list(self.accounts.values()))

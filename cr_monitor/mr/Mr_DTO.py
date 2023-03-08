@@ -1,7 +1,7 @@
 import datetime, ccxt, os, yaml, requests
 import pandas as pd
 import numpy as np
-from research.utils import draw_ssh
+from cr_assis.draw import draw_ssh
 from bokeh.plotting import figure, show
 from bokeh.models.widgets import Panel, Tabs
 
