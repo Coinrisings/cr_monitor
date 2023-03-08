@@ -2,7 +2,7 @@ from research.utils import readData
 from research.utils.ObjectDataType import AccountData
 from daily_monitor import DailyMonitorDTO
 import yaml, os, json, requests, datetime, copy, logging, traceback
-from announcement import ExchangeAnnouncement
+from cr_monitor.connect.announcement import ExchangeAnnouncement
 
 class CapitalMonitor(DailyMonitorDTO):
     def __init__(self, log_path = os.environ['HOME'] + "/data/cr_monitor"):

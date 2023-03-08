@@ -1,4 +1,4 @@
-from capital_monitor import CapitalMonitor
+from cr_monitor.daily.capital_monitor import CapitalMonitor
 import os, yaml
 with open(f"{os.environ['HOME']}/.cryptobridge/private_key.yml", "rb") as f:
     data = yaml.load(f, Loader= yaml.SafeLoader)

@@ -1,4 +1,4 @@
-from cr_monitor.Mr_DTF import MrDTF
+from cr_monitor.mr.Mr_DTF import MrDTF
 
 class FsoUC(MrDTF):
     """Fso means future and spot in okex, while UC means usdt-swap and usd-future. No matter what is master.

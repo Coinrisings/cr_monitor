@@ -3,16 +3,17 @@ import pandas as pd
 import numpy as np
 import research.utils.pnlDaily as pnl_daily
 from pymongo import MongoClient
+from cr_assis.connectData import ConnectData
 from cr_assis.accountBase import AccountBase
 from research.eva import eva
-from cr_monitor.Mr_DTO import MrDTO
-from research.utils import readData
+from cr_monitor.mr.Mr_DTO import MrDTO
 
 class DailyMonitorDTO(object):
     def __init__(self, ignore_test = True):
         self.ignore_test = ignore_test
         self.strategy_name = "dt_okex_cswap_okex_uswap"
         self.init_accounts()
+        self.database = ConnectData()
         self.get_pnl_daily = pnl_daily
     
     def get_now_parameter(self, deploy_id: str) -> pd.DataFrame:
@@ -131,12 +132,12 @@ class DailyMonitorDTO(object):
         a = f"""
         select mean({ccy}) as equity from balance_v2 where balance_id = '{account.balance_id}' and time >= now() - 30m
         """
-        data = readData.read_influx(a, transfer = False)
+        data = self.database._send_influx_query(a, database = "account_data")
         if len(data) == 0:
             a = f"""
             select last({ccy}) as equity from balance_v2 where balance_id = '{account.balance_id}' and time >= now() - 1d
             """
-            data = readData.read_influx(a, transfer = False)
+            data = self.database._send_influx_query(a, database = "account_data")
         if len(data) == 0:
             data = pd.DataFrame(columns = ["equity"])
             data.loc[0, "equity"] = np.nan
@@ -148,12 +149,12 @@ class DailyMonitorDTO(object):
         a = f"""
         select mean({ccy}) as equity from balance_v2 where balance_id = '{account.balance_id}' and time >= now() - 7d - 30m and time <= now() - 7d
         """
-        data = readData.read_influx(a, transfer = False)
+        data = self.database._send_influx_query(a, database = "account_data")
         if len(data) == 0:
             a = f"""
             select last({ccy}) as equity from balance_v2 where balance_id = '{account.balance_id}' and time >= now() - 8d and time <= now() - 6d
             """
-            data = readData.read_influx(a, transfer = False)
+            data = self.database._send_influx_query(a, database = "account_data")
         if len(data) == 0:
             data = pd.DataFrame(columns = ["equity"])
             data.loc[0, "equity"] = np.nan

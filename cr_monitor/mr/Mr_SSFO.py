@@ -1,4 +1,4 @@
-from Mr_DTO import MrDTO
+from cr_monitor.mr.Mr_DTO import MrDTO
 
 class MrSSFO(MrDTO):
     """SSFO means spot and usdt_swap in okex.
