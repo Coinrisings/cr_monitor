@@ -130,12 +130,12 @@ class DailyMonitorDTO(object):
     def get_last_equity(self, account) -> float:
         ccy = account.principal_currency.lower()
         a = f"""
-        select mean({ccy}) as equity from balance_v2 where balance_id = '{account.balance_id}' and time >= now() - 30m
+        select mean({ccy}) as equity, balance_id from balance_v2 where username = '{account.username}' and client = '{account.client}' and time >= now() - 1d
         """
         data = self.database._send_influx_query(a, database = "account_data")
         if len(data) == 0:
             a = f"""
-            select last({ccy}) as equity from balance_v2 where balance_id = '{account.balance_id}' and time >= now() - 1d
+            select mean({ccy}) as equity, balance_id from balance_v2 where username = '{account.username}' and client = '{account.client}' and time >= now() - 1d
             """
             data = self.database._send_influx_query(a, database = "account_data")
         if len(data) == 0:
@@ -163,8 +163,8 @@ class DailyMonitorDTO(object):
 
     def get_week_profit(self, account: AccountBase) -> float:
         equity = {}
-        equity["now"] = self.get_last_equity(account)
-        equity["7d"] = self.get_7d_equity(account)
+        equity["now"] = account.get_mean_equity()
+        equity["7d"] = account.get_mean_equity(the_time="now()-7d")
         profit = equity["now"] / equity["7d"] - 1
         return profit
     
