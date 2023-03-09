@@ -198,7 +198,7 @@ class DailyMonitorDTO(object):
                         'MV%': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}'}
-        now_situation = now_situation.style.format(format_dict).background_gradient(cmap='Blues', subset = ["MV", "MV%", "mr", 'week_profit'])
+        now_situation = now_situation.style.format(format_dict).background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit'])
         return now_situation
             
     def run_daily(self) -> pd.DataFrame:

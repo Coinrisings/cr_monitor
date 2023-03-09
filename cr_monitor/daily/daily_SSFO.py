@@ -92,7 +92,7 @@ class DailySSFO(DailyMonitorDTF):
         return mv_monitor
     
     def get_all_position(self) -> pd.DataFrame:
-        mv_monitor = self.get_mv_monitor(start = "now() - 10m")
+        mv_monitor = self.get_mv_monitor(start = "now() - 5m")
         all_position = pd.DataFrame(columns = list(mv_monitor.keys()))
         for account in all_position.columns:
             account_position = mv_monitor[account].copy()
