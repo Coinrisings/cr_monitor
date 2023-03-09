@@ -3,6 +3,7 @@ from cr_monitor.daily.daily_DTFmonitor import DailyMonitorDTF
 from cr_assis.connect.connectData import ConnectData
 import copy, sys, os, datetime
 from cr_assis.pnl.ssfoPnl import SsfoPnl
+from cr_monitor.position.Position_SSFO import PositionSSFO
 import pandas as pd
 import numpy as np
 from research.eva import eva
@@ -75,3 +76,28 @@ class DailySSFO(DailyMonitorDTF):
                         }
         account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = ["MV", "MV%", "mr", 'week_profit','1d_rpnl%', '3d_rpnl%', '7d_rpnl%','1d_fpnl%', '3d_fpnl%', '7d_fpnl%'])
         return account_overall
+    
+    def get_mv_monitor(self, start = "now() - 1d", end = "now()") -> dict:
+        mv_monitor = {}
+        for name, account in self.accounts.items():
+            account.position_ssfo = PositionSSFO()
+            position = account.position_ssfo
+            position.get_origin_slave(client = account.client, username = account.username, start = "now() - 10m", end = "now()")
+            position.get_slave_mv()
+            account.get_equity()
+            for pair, data in position.origin_slave.items():
+                data['mv%'] = round(data["mv"] / account.adjEq * 100, 4)
+            mv_monitor[name] = position.origin_slave.copy()
+        self.mv_monitor = mv_monitor
+        return mv_monitor
+    
+    def get_all_position(self) -> pd.DataFrame:
+        mv_monitor = self.get_mv_monitor(start = "now() - 10m")
+        all_position = pd.DataFrame(columns = list(mv_monitor.keys()))
+        for account in all_position.columns:
+            account_position = mv_monitor[account].copy()
+            for pair in account_position.keys():
+                coin = pair.split("-")[0]
+                all_position.loc[coin, account] = account_position[pair].fillna(method='ffill')["mv%"].values[-1]
+        all_position.loc["total"] = all_position.sum(axis = 0)
+        return all_position
