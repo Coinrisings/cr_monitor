@@ -56,7 +56,7 @@ class PositionSSFO(object):
             tier_slave[coin] = tier.copy()
         self.tier_slave = tier_slave
     
-    def get_origin_slave(self, client: str, username: str, start: str, end: str) -> influxdb.resultset.ResultSet:
+    def get_origin_slave(self, client: str, username: str, start: str, end: str) -> dict:
         sql = f"""
         select ex_field, time, exchange, long, long_open_price, settlement, last(short) as short, short_open_price, pair from position
         where client = '{client}' and username = '{username}' and time > {start} and time < {end} and (long >0 or short >0)

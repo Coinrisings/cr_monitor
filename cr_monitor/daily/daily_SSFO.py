@@ -74,7 +74,7 @@ class DailySSFO(DailyMonitorDTF):
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}',
                         }
-        account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = ["MV", "MV%", "mr", 'week_profit','1d_rpnl%', '3d_rpnl%', '7d_rpnl%','1d_fpnl%', '3d_fpnl%', '7d_fpnl%'])
+        account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit','1d_rpnl%', '3d_rpnl%', '7d_rpnl%','1d_fpnl%', '3d_fpnl%', '7d_fpnl%'])
         return account_overall
     
     def get_mv_monitor(self, start = "now() - 1d", end = "now()") -> dict:
@@ -82,7 +82,7 @@ class DailySSFO(DailyMonitorDTF):
         for name, account in self.accounts.items():
             account.position_ssfo = PositionSSFO()
             position = account.position_ssfo
-            position.get_origin_slave(client = account.client, username = account.username, start = "now() - 10m", end = "now()")
+            position.get_origin_slave(client = account.client, username = account.username, start = start, end = end)
             position.get_slave_mv()
             account.get_equity()
             for pair, data in position.origin_slave.items():

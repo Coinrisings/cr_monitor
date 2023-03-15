@@ -1,31 +1,39 @@
 from cr_monitor.mr.Mr_DTF import MrDTF
 from cr_monitor.mr.Mr_DTO import MrDTO
 from cr_monitor.mr.MrFso_UC import FsoUC
+from cr_monitor.mr.Mr_BUO import MrBUO
 import os, yaml, sys
 import pandas as pd
 from cr_assis.account.accountBase import AccountBase
 
 add = 0.83
 account = AccountBase(deploy_id = "anta_anta001@dt_okex_uswap_okex_cfuture_btc")
-now_position = account.get_now_position()
-account.get_equity()
-now_price = account.get_coin_price(coin = "btc")
-add_value = add * account.adjEq
-add_coin = add_value / now_price
-now_position.loc["btc", "master_number"] += add_coin
-now_position.loc["btc", "slave_number"] += int(add_value / 100)
-now_position.loc["btc", "slave_MV"] += add_value
-now_position.loc["btc", "master_MV"] += add_value
-now_position.loc["btc", "slave_open_price"] = now_position.loc["btc", "slave_MV"] / now_position.loc["btc", "master_number"]
-now_position.loc["btc", "master_open_price"] = now_position.loc["btc", "master_MV"] / now_position.loc["btc", "master_number"]
+# now_position = account.get_now_position()
+now_position = pd.DataFrame(columns = ["master_number", "master_open_price", "slave_number", "slave_open_price"])
+btc_price = account.get_coin_price("btc")
+fund = 60
+account.adjEq = fund* btc_price
+# account.get_equity()
+coin = "eth"
+now_price = account.get_coin_price(coin)
+mul = 1
+now_position.loc[coin] = [fund * btc_price * mul / now_price, now_price, fund* btc_price * mul / now_price, now_price]
+# add_value = add * account.adjEq
+# add_coin = add_value / now_price
+# now_position.loc["btc", "master_number"] += add_coin
+# now_position.loc["btc", "slave_number"] += int(add_value / 100)
+# now_position.loc["btc", "slave_MV"] += add_value
+# now_position.loc["btc", "master_MV"] += add_value
+# now_position.loc["btc", "slave_open_price"] = now_position.loc["btc", "slave_MV"] / now_position.loc["btc", "master_number"]
+# now_position.loc["btc", "master_open_price"] = now_position.loc["btc", "master_MV"] / now_position.loc["btc", "master_number"]
 #初始化账户
-mr_dto = FsoUC(amount_c = now_position.loc["btc", "slave_number"],
-                amount_u = round(now_position.loc["btc", "master_number"] * 100, 0),
-                amount_fund = account.adjEq / now_price,
-                price_u = now_position.loc["btc", "master_open_price"], 
-                price_c = now_position.loc["btc", "slave_open_price"],
+mr_dto = MrBUO(amount_c = now_position.loc[coin, "slave_number"] * 1000,
+                amount_u = round(now_position.loc[coin, "master_number"] * 10, 0),
+                amount_fund = fund,
+                price_u = now_position.loc[coin, "master_open_price"], 
+                price_c = now_position.loc[coin, "slave_open_price"],
                 now_price = now_price, 
-                suffix = "230331")
+                coin = coin.upper())
 mr_dto.run_mmr(play = False)
 
 with open(f"{os.environ['HOME']}/.cryptobridge/private_key.yml", "rb") as f:
