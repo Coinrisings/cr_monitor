@@ -51,7 +51,8 @@ class DailySSFO(DailyMonitorDTF):
             profit = self.get_week_profit(account)
             now_situation.loc[i] = [account.parameter_name, capital, ccy, mv, round(mv_precent * 100, 4), mr, profit]
         self.now_situation = now_situation.copy()
-        format_dict = { 'MV': '{0:.2f}', 
+        format_dict = {'capital': lambda x: format(round(x, 4), ","),  
+                        'MV': '{0:.2f}', 
                         'MV%': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}'}
@@ -112,6 +113,7 @@ class DailySSFO(DailyMonitorDTF):
                         '3d_fpnl%': '{0:.4%}', 
                         '7d_fpnl%': '{0:.4%}', 
                         'MV%': '{0:.2f}', 
+                        'MV': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}',
                         }
@@ -132,8 +134,8 @@ class DailySSFO(DailyMonitorDTF):
         self.mv_monitor = mv_monitor
         return mv_monitor
     
-    def get_all_position(self) -> pd.DataFrame:
-        mv_monitor = self.get_mv_monitor(start = "now() - 5m")
+    def get_all_position(self, start = "now() - 5m", end = "now()") -> pd.DataFrame:
+        mv_monitor = self.get_mv_monitor(start = start, end = end)
         all_position = pd.DataFrame(columns = list(mv_monitor.keys()))
         for account in all_position.columns:
             account_position = mv_monitor[account].copy()
@@ -143,3 +145,17 @@ class DailySSFO(DailyMonitorDTF):
         all_position.loc["total"] = all_position.sum(axis = 0)
         self.all_position = all_position.copy()
         return all_position
+    
+    def get_position_change(self, start: str, end: str) -> pd.DataFrame:
+        before = self.get_all_position(start = f"{start} - 5m", end = start).fillna(0)
+        after = self.get_all_position(start = f"{end} - 5m", end = end).fillna(0)
+        coins = set(list(before.index.values)) | set(list(after.index.values))
+        names = set(list(before.columns.values)) | set(list(after.columns.values))
+        position_change = pd.DataFrame(index = list(coins), columns = list(names))
+        for coin in coins:
+            for name in names:
+                position0 = before.loc[coin, name] if coin in before.index.values and name in before.columns.values else 0
+                position1 = after.loc[coin, name] if coin in after.index.values and name in after.columns.values else 0
+                delta_position = position1 - position0
+                position_change.loc[coin, name] = delta_position
+        return position_change
