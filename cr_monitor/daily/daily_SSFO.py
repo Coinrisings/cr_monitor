@@ -77,7 +77,7 @@ class DailySSFO(DailyMonitorDTF):
             data.drop("dt", inplace = True, axis = 1)
             data.drop("time", inplace = True, axis = 1)
             rate.loc[coin] = data.loc[0]
-        all_position = self.get_all_position()
+        all_position = self.get_all_position().fillna(0).drop("total")
         for account in self.accounts.values():
             self.funding_summary[account.parameter_name] = 0
             for coin in all_position.index:
@@ -150,13 +150,14 @@ class DailySSFO(DailyMonitorDTF):
         before = self.get_all_position(start = f"{start} - 5m", end = start).fillna(0)
         after = self.get_all_position(start = f"{end} - 5m", end = end).fillna(0)
         coins = set(list(before.index.values)) | set(list(after.index.values))
-        coins = coins.remove("total")
+        coins.remove("total")
         names = set(list(before.columns.values)) | set(list(after.columns.values))
         position_change = pd.DataFrame(index = list(coins) + ["total"], columns = list(names))
-        for coin in coins:
+        for coin in position_change.index:
             for name in names:
                 position0 = before.loc[coin, name] if coin in before.index.values and name in before.columns.values else 0
                 position1 = after.loc[coin, name] if coin in after.index.values and name in after.columns.values else 0
                 delta_position = position1 - position0
                 position_change.loc[coin, name] = delta_position
+        position_change.sort_index(axis = 1, inplace = True)
         return position_change
