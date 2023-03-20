@@ -17,7 +17,7 @@ class DailySSFO(DailyMonitorDTF):
         self.init_accounts()
         self.get_pnl_daily = SsfoPnl(accounts = list(self.accounts.values()))
     
-    def get_now_mv_percent(self, account: AccountBase) -> tuple(float, float):
+    def get_now_mv_percent(self, account: AccountBase) -> float:
         account.get_equity()
         position = PositionSSFO() if not hasattr(account, "position_ssfo") else account.position_ssfo
         if not hasattr(position, "origin_slave"):
