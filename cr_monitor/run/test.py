@@ -1,7 +1,9 @@
-from cr_assis.draw import draw_ssh
 from cr_assis.load import *
+from cr_assis.draw import draw_ssh
+from cr_monitor.daily.daily_SSFO import DailySSFO
+from cr_monitor.position.Position_SSFO import PositionSSFO
+daily = DailySSFO()
 print(f"running time: {datetime.datetime.now()}")
 
-data = pd.read_csv("/Users/ssh/Downloads/funding.csv", index_col=0)
-data.index = pd.to_datetime(data.index)
-data
+now_situation = daily.get_now_situation()
+now_situation

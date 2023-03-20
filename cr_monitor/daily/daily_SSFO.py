@@ -20,15 +20,15 @@ class DailySSFO(DailyMonitorDTF):
     def get_now_mv_percent(self, account: AccountBase) -> float:
         account.get_equity()
         mv = 0
-        mv_precent = 0
         position = PositionSSFO() if not hasattr(account, "position_ssfo") else account.position_ssfo
         if not hasattr(position, "origin_slave"):
             position.get_origin_slave(client = account.client, username = account.username, start = "now() - 10m", end = "now()")
             position.get_slave_mv()
         for data in position.origin_slave.values():
             data.set_index("time", inplace = True)
-            mv += round(data["mv"].values[-1] / account.adjEq * 100, 4)
-            mv_precent = mv / account.adjEq
+            data.dropna(how = "any", inplace = True)
+            mv += data["mv"].values[-1]
+        mv_precent = mv / account.adjEq
         return mv, mv_precent
     
     def get_now_situation(self) -> pd.DataFrame:
@@ -45,12 +45,11 @@ class DailySSFO(DailyMonitorDTF):
             account = accounts[i]
             mv, mv_precent = self.get_now_mv_percent(account)
             account.get_mgnRatio()
-            capital_price = 1 if "USD" in account.principal_currency else account.get_coin_price(coin = account.principal_currency.lower())
-            capital = account.get_mean_equity() / capital_price
+            capital = account.get_mean_equity()
             ccy = account.principal_currency
             mr = account.mr["okex"]
             profit = self.get_week_profit(account)
-            now_situation.loc[i] = [account.parameter_name, capital, ccy, mv, mv_precent, mr, profit]
+            now_situation.loc[i] = [account.parameter_name, capital, ccy, mv, round(mv_precent * 100, 4), mr, profit]
         self.now_situation = now_situation.copy()
         format_dict = { 'MV': '{0:.2f}', 
                         'MV%': '{0:.2f}', 
