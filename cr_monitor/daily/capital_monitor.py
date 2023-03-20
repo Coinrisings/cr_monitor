@@ -45,7 +45,8 @@ class CapitalMonitor(DailyMonitorDTO):
             "gate_spot-gate_usdt_swap": "yyz",
             "gate_usdt_swap-okx_usdt_swap": "yyz",
             "binance_usdc_swap-binance_usdt_swap": "yyz",
-            "binance_busd_swap-binance_usdt_swap": "scq"
+            "binance_busd_swap-binance_usdt_swap": "scq",
+            'binance_usd_swap-binance_usdt_swap': "scq"
         }
         for account in self.accounts.values():
             if account.combo not in combo_people.keys():
