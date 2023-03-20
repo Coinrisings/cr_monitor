@@ -5,5 +5,5 @@ from cr_monitor.position.Position_SSFO import PositionSSFO
 daily = DailySSFO()
 print(f"running time: {datetime.datetime.now()}")
 
-now_situation = daily.get_now_situation()
-now_situation
+position_change = daily.get_position_change(start = "now() - 30m", end = "now()")
+position_change

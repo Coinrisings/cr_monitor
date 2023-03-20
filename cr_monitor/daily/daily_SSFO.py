@@ -150,8 +150,9 @@ class DailySSFO(DailyMonitorDTF):
         before = self.get_all_position(start = f"{start} - 5m", end = start).fillna(0)
         after = self.get_all_position(start = f"{end} - 5m", end = end).fillna(0)
         coins = set(list(before.index.values)) | set(list(after.index.values))
+        coins = coins.remove("total")
         names = set(list(before.columns.values)) | set(list(after.columns.values))
-        position_change = pd.DataFrame(index = list(coins), columns = list(names))
+        position_change = pd.DataFrame(index = list(coins) + ["total"], columns = list(names))
         for coin in coins:
             for name in names:
                 position0 = before.loc[coin, name] if coin in before.index.values and name in before.columns.values else 0
