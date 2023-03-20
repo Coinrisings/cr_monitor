@@ -19,13 +19,15 @@ class DailySSFO(DailyMonitorDTF):
     
     def get_now_mv_percent(self, account: AccountBase) -> float:
         account.get_equity()
+        mv = 0
+        mv_precent = 0
         position = PositionSSFO() if not hasattr(account, "position_ssfo") else account.position_ssfo
         if not hasattr(position, "origin_slave"):
             position.get_origin_slave(client = account.client, username = account.username, start = "now() - 10m", end = "now()")
             position.get_slave_mv()
         for data in position.origin_slave.values():
             data.set_index("time", inplace = True)
-            mv = sum(data[data.columns].values[-1])
+            mv += round(data["mv"].values[-1] / account.adjEq * 100, 4)
             mv_precent = mv / account.adjEq
         return mv, mv_precent
     
@@ -107,7 +109,7 @@ class DailySSFO(DailyMonitorDTF):
                         '1d_rpnl%': '{0:.4%}', 
                         '3d_rpnl%': '{0:.4%}', 
                         '7d_rpnl%': '{0:.4%}', 
-                       '1d_fpnl%': '{0:.4%}', 
+                        '1d_fpnl%': '{0:.4%}', 
                         '3d_fpnl%': '{0:.4%}', 
                         '7d_fpnl%': '{0:.4%}', 
                         'MV%': '{0:.2f}', 
@@ -140,4 +142,5 @@ class DailySSFO(DailyMonitorDTF):
                 coin = pair.split("-")[0]
                 all_position.loc[coin, account] = account_position[pair].fillna(method='ffill')["mv%"].values[-1]
         all_position.loc["total"] = all_position.sum(axis = 0)
+        self.all_position = all_position.copy()
         return all_position
