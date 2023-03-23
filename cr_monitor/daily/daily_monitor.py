@@ -206,7 +206,7 @@ class DailyMonitorDTO(object):
         for i in account_overall.index:
             parameter_name = account_overall.loc[i, "account"]
             #adjEq
-            adjEq = self.get_last_equity(self.accounts[parameter_name])
+            adjEq = self.accounts[parameter_name].get_mean_equity()
             account_overall.loc[i, "capital"] = adjEq
             #total MV%
             self.accounts[parameter_name].get_account_position()
