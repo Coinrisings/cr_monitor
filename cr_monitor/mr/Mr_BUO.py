@@ -157,26 +157,3 @@ class MrBUO(MrDTO):
         upnl["USDC"] = (price_u - self.holding_price["usdc"]) * self.coin_c
         upnl["USDT"] = (self.holding_price["usdt"] - price_u) * self.coin_u
         return upnl
-    
-coin = "btc"
-key = f"okexv5/{coin}-usdt"
-key = bytes(key, encoding = "utf8")
-r = readData.read_redis()
-data = r.hgetall(key)
-now_price = eval(data[b'bid0_price'])
-amount_fund = 40
-mul = 1.1
-amount_u = amount_fund * mul * 100
-amount_c = amount_fund * mul * 10000
-m = MrBUO(amount_u = amount_u,
-            amount_c = amount_c,
-            amount_fund = amount_fund,
-            price_u =  now_price, 
-            price_c =  now_price,
-            now_price = now_price)
-m.initialize()
-print(m.mr)
-print(m.amount)
-print(m.mmr_swap)
-m.run_mmr(play= False)
-print(1)

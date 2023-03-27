@@ -20,9 +20,9 @@ class DailySSFO(DailyMonitorDTF):
     def get_now_mv_percent(self, account: AccountBase) -> float:
         account.get_equity()
         mv = 0
-        position = PositionSSFO() if not hasattr(account, "position_ssfo") else account.position_ssfo
+        position = PositionSSFO(client = account.client, username = account.username) if not hasattr(account, "position_ssfo") else account.position_ssfo
         if not hasattr(position, "origin_slave"):
-            position.get_origin_slave(client = account.client, username = account.username, start = "now() - 10m", end = "now()")
+            position.get_origin_slave(start = "now() - 10m", end = "now()")
             position.get_slave_mv()
         for data in position.origin_slave.values():
             data.set_index("time", inplace = True)
@@ -93,6 +93,36 @@ class DailySSFO(DailyMonitorDTF):
         funding_summary = result.style.format(format_dict)
         return funding_summary
     
+    def get_volume_rate(self) -> pd.DataFrame:
+        self.get_all_position() if not hasattr(self, "mv_monitor") else None
+        self.get_change() if not hasattr(self, "funding_summary") else None
+        volume_rate = pd.DataFrame(columns = ["vol_24h", "total"])
+        volume_rate["vol_24h"] = self.funding_summary["vol_24h"]
+        for name, mv in self.mv_monitor.items():
+            for pair, data in mv.items():
+                coin = pair.split("-")[0].upper()
+                volume_rate.loc[coin, name] = data.dropna(subset = ["mv"])["mv"].values[-1]
+        names = list(self.mv_monitor.keys())
+        volume_rate.fillna(0, inplace= True)
+        volume_rate["total"] = volume_rate[names].sum(axis = 1)
+        self.volume_rate = copy.deepcopy(volume_rate)
+        format_dict = {}
+        for col in volume_rate.columns:
+            format_dict[col] = lambda x: format(round(x, 0), ",")
+        volume_rate = volume_rate.style.format(format_dict)
+        return volume_rate
+    
+    def daily_run_chance(self, save_file = False, save_path = "") -> tuple[pd.DataFrame.style, pd.DataFrame.style]:
+        funding_summary = self.get_change()
+        volume_rate = self.get_volume_rate()
+        if save_file:
+            writer = pd.ExcelWriter(f"{save_path}.xlsx", engine='openpyxl')
+            self.funding_summary.to_excel(excel_writer=writer, sheet_name="funding_summary")
+            self.volume_rate.to_excel(excel_writer=writer, sheet_name="volume_rate")
+            writer.save()
+            writer.close()
+        return funding_summary, volume_rate
+    
     def run_daily(self) -> pd.DataFrame:
         rpnl = self.get_pnl_daily.get_rpnl()
         fpnl = self.get_pnl_daily.get_fpnl()
@@ -123,9 +153,9 @@ class DailySSFO(DailyMonitorDTF):
     def get_mv_monitor(self, start = "now() - 1d", end = "now()") -> dict:
         mv_monitor = {}
         for name, account in self.accounts.items():
-            account.position_ssfo = PositionSSFO() if not hasattr(account, "position_ssfo") else account.position_ssfo
+            account.position_ssfo = PositionSSFO(client = account.client, username = account.username) if not hasattr(account, "position_ssfo") else account.position_ssfo
             position = account.position_ssfo
-            position.get_origin_slave(client = account.client, username = account.username, start = start, end = end)
+            position.get_origin_slave(start = start, end = end)
             position.get_slave_mv()
             account.get_equity()
             for pair, data in position.origin_slave.items():

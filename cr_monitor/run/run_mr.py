@@ -2,9 +2,27 @@ from cr_monitor.mr.Mr_DTF import MrDTF
 from cr_monitor.mr.Mr_DTO import MrDTO
 from cr_monitor.mr.MrFso_UC import FsoUC
 from cr_monitor.mr.Mr_BUO import MrBUO
-import os, yaml, sys
+from cr_monitor.position.Position_SSFO import PositionSSFO
+import os, yaml
 import pandas as pd
 from cr_assis.account.accountBase import AccountBase
+
+btc_price = 28214
+btc_number = 0.07
+fitfi_price = 0.0137
+mul = 1.2
+mv = btc_price * mul * btc_number
+fitfi_number = mv / fitfi_price
+amount_master = {"FITFI": fitfi_number}
+amount_slave = {"FITFI": fitfi_number}
+
+position = PositionSSFO(equity={"BTC": btc_number}, client="cr", username = "cr003", 
+                        amount_master=amount_master, amount_slave= amount_slave)
+# position.get_now_position()
+# position.get_start_adjEq()
+# position.get_upnl()
+mr = position.cal_mr()
+print(mr)
 
 add = 0.83
 account = AccountBase(deploy_id = "anta_anta001@dt_okex_uswap_okex_cfuture_btc")
