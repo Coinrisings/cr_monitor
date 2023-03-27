@@ -6,7 +6,7 @@ from cr_assis.connect.connectData import ConnectData
 class PositionSSFO(object):
     """Define the position information of SSFO"""
     
-    def __init__(self, amount_master={}, amount_slave={}, price_master={},price_slave={}, equity={}, client = "", username = "") -> None:
+    def __init__(self, amount_master={}, amount_slave={}, price_master={},price_slave={}, equity={"USDT": 10000}, client = "", username = "") -> None:
         self.master = "spot"
         self.slave = "usdt_swap"
         self.markets = ccxt.okex().load_markets()
