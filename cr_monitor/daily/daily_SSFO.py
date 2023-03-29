@@ -103,7 +103,7 @@ class DailySSFO(DailyMonitorDTF):
             for pair, data in mv.items():
                 coin = pair.split("-")[0].upper()
                 volume_rate.loc[coin, name] = data.dropna(subset = ["mv"])["mv"].values[-1]
-        names = list(self.mv_monitor.keys())
+        names = list(set(self.mv_monitor.keys()) & set(volume_rate.columns))
         volume_rate.fillna(0, inplace= True)
         volume_rate["total"] = volume_rate[names].sum(axis = 1)
         self.volume_rate = copy.deepcopy(volume_rate)
@@ -173,6 +173,8 @@ class DailySSFO(DailyMonitorDTF):
             for pair in account_position.keys():
                 coin = pair.split("-")[0]
                 all_position.loc[coin, account] = account_position[pair].fillna(method='ffill')["mv%"].values[-1]
+        all_position.sort_index(axis = 0, inplace = True)
+        all_position.sort_index(axis = 1, inplace = True)
         all_position.loc["total"] = all_position.sum(axis = 0)
         self.all_position = all_position.copy()
         return all_position
@@ -180,10 +182,11 @@ class DailySSFO(DailyMonitorDTF):
     def get_position_change(self, start: str, end: str) -> pd.DataFrame:
         before = self.get_all_position(start = f"{start} - 5m", end = start).fillna(0)
         after = self.get_all_position(start = f"{end} - 5m", end = end).fillna(0)
-        coins = set(list(before.index.values)) | set(list(after.index.values))
+        coins = list(set(list(before.index.values)) | set(list(after.index.values)))
         coins.remove("total")
+        coins.sort()
         names = set(list(before.columns.values)) | set(list(after.columns.values))
-        position_change = pd.DataFrame(index = list(coins) + ["total"], columns = list(names))
+        position_change = pd.DataFrame(index = coins + ["total"], columns = list(names))
         for coin in position_change.index:
             for name in names:
                 position0 = before.loc[coin, name] if coin in before.index.values and name in before.columns.values else 0

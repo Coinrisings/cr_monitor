@@ -30,10 +30,9 @@ class DailyDTC(DailySSFO):
         self.get_now_situation() if not hasattr(self, "now_situation") else None
         rate = pd.DataFrame(columns = ["next", "current"])
         for coin in self.funding_summary.index:
-            data = eva.get_last_influx_funding(exchange_name="okex", pair_name=f"{coin.lower()}-usdc-swap")
-            data.rename(columns = {"rate": "current", "next_fee": "next"}, inplace = True)
-            data.drop(["dt", "time"], inplace = True, axis = 1)
-            rate.loc[coin] = data.loc[0]
+            data0 = eva.get_last_influx_funding(exchange_name="okex", pair_name=f"{coin.lower()}-usdc-swap")
+            data1 = eva.get_last_influx_funding(exchange_name="okex", pair_name=f"{coin.lower()}-usd-swap")
+            rate.loc[coin] = [data0["next_fee"].values[-1] - data1["next_fee"].values[-1], data0["rate"].values[-1] - data1["rate"].values[-1]]
         all_position = self.get_all_position().fillna(0).drop("total")
         for account in self.accounts.values():
             self.funding_summary[account.parameter_name] = 0
