@@ -24,8 +24,7 @@ class PositionSSFO(object):
         self.tier_slave = {}
         self.tier_master = {}
         self.contract_slave = {}
-        self.get_start_adjEq()
-        self.get_upnl()
+        
     
     def get_contractsize_slave(self, coin: str) -> float:
         coin = coin.upper()
@@ -206,6 +205,8 @@ class PositionSSFO(object):
         return mm_master, mm_slave
         
     def cal_mr(self) -> float:
+        self.get_start_adjEq()
+        self.get_upnl()
         adjEq = self.get_disacount_adjEq()
         mm_master, mm_slave = self.cal_mm()
         mr = adjEq / (sum(mm_master.values()) + sum(mm_slave.values()))
@@ -214,15 +215,15 @@ class PositionSSFO(object):
     
     def get_origin_slave(self, start: str, end: str) -> dict:
         sql = f"""
-        select ex_field, time, exchange, long, long_open_price, settlement, last(short) as short, short_open_price, pair from position
+        select ex_field, time, exchange, long, long_open_price, settlement, secret_id, last(short) as short, short_open_price, pair from position
         where client = '{self.client}' and username = '{self.username}' and time > {start} and time < {end} and (long >0 or short >0)
-        and ex_field = 'swap'
+        and ex_field = 'swap' and settlement = 'usdt'
         group by time(1m), pair ORDER BY time
         """
         ret = self.database._send_influx_query(sql = sql, database = "account_data", is_dataFrame= False)
         result = {}
         for info in ret.keys():
-            result[info[1]['pair']] = pd.DataFrame(ret[info])
+            result[info[1]['pair']] = pd.DataFrame(ret[info]).dropna(subset = "secret_id")
         self.origin_slave = result
         return result
     

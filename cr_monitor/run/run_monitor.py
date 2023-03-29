@@ -1,12 +1,8 @@
-from cr_monitor.daily.capital_monitor import CapitalMonitor
-import os, yaml
-with open(f"{os.environ['HOME']}/.cryptobridge/private_key.yml", "rb") as f:
-    data = yaml.load(f, Loader= yaml.SafeLoader)
-for info in data:
-    if "mongo" in info.keys():
-        os.environ["MONGO_URI"] = info['mongo']
-        os.environ["INFLUX_URI"] = info['influx']
-        os.environ["INFLUX_MARKET_URI"] = info['influx_market']
+from cr_assis.load import *
+from cr_monitor.daily.daily_DTC import DailyDTC
 
-cm  = CapitalMonitor(log_path = "/mnt/efs/fs1/data_ssh")
-cm.run_monitor()
+daily = DailyDTC()
+position_change = daily.get_position_change(start = "now() - 3h", end = "now()")
+now_situation = daily.get_now_situation()
+account_overall = daily.run_daily()
+daily.daily_run_chance()

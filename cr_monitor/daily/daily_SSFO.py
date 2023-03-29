@@ -14,13 +14,14 @@ class DailySSFO(DailyMonitorDTF):
         self.ignore_test = ignore_test
         self.database = ConnectData()
         self.strategy_name = "ssf_okexv5_spot_okexv5_uswap_btc"
+        self.position = PositionSSFO
         self.init_accounts()
         self.get_pnl_daily = SsfoPnl(accounts = list(self.accounts.values()))
     
     def get_now_mv_percent(self, account: AccountBase) -> float:
         account.get_equity()
         mv = 0
-        position = PositionSSFO(client = account.client, username = account.username) if not hasattr(account, "position_ssfo") else account.position_ssfo
+        position = self.position(client = account.client, username = account.username) if not hasattr(account, "position_ssfo") else account.position_ssfo
         if not hasattr(position, "origin_slave"):
             position.get_origin_slave(start = "now() - 10m", end = "now()")
             position.get_slave_mv()
@@ -153,7 +154,7 @@ class DailySSFO(DailyMonitorDTF):
     def get_mv_monitor(self, start = "now() - 1d", end = "now()") -> dict:
         mv_monitor = {}
         for name, account in self.accounts.items():
-            account.position_ssfo = PositionSSFO(client = account.client, username = account.username) if not hasattr(account, "position_ssfo") else account.position_ssfo
+            account.position_ssfo = self.position(client = account.client, username = account.username) if not hasattr(account, "position_ssfo") else account.position_ssfo
             position = account.position_ssfo
             position.get_origin_slave(start = start, end = end)
             position.get_slave_mv()

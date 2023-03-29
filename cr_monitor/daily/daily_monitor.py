@@ -77,7 +77,7 @@ class DailyMonitorDTO(object):
             pass
         return master, slave, ccy
     
-    def init_accounts(self) -> None:
+    def init_accounts(self, is_usdc = False) -> None:
         """初始化所有指定策略线账户"""
         deploy_ids = self.get_all_deploys()
         accounts = {}
@@ -91,16 +91,7 @@ class DailyMonitorDTO(object):
                 judgement2 = True
             if judgement1 and judgement2:
                 #只监控指定策略线账户
-                master, slave, ccy = self.get_strategy_info(strategy)
-                accounts[parameter_name] = AccountBase(deploy_id = deploy_id)
-                parameter = self.get_now_parameter(deploy_id)
-                path1 = parameter.loc[0, "secret_master"].replace("/", "__")
-                path1 = path1.replace(":", "_")
-                path2 = parameter.loc[0, "secret_slave"].replace("/", "__")
-                path2 = path2.replace(":", "_")
-                paths = [path1, path2]
-                accounts[parameter_name].path_orders = paths
-                accounts[parameter_name].path_ledgers = paths
+                accounts[parameter_name] = AccountBase(deploy_id = deploy_id, is_usdc= is_usdc)
             else:
                 pass
         self.accounts = accounts.copy()
@@ -198,7 +189,7 @@ class DailyMonitorDTO(object):
                         'MV%': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}'}
-        now_situation = now_situation.style.format(format_dict).background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit'])
+        now_situation = now_situation.style.format(format_dict)#.background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit'])
         return now_situation
             
     def run_daily(self) -> pd.DataFrame:
@@ -234,7 +225,7 @@ class DailyMonitorDTO(object):
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}'
                         }
-        account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = ["daily_pnl", "daily_pnl%", "MV%", "mr", 'week_profit'])
+        account_overall = account_overall.style.format(format_dict)#.background_gradient(cmap='Blues', subset = ["daily_pnl", "daily_pnl%", "MV%", "mr", 'week_profit'])
         return account_overall
     
     def get_change(self):

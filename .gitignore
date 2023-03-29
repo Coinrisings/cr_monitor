@@ -1,5 +1,6 @@
 *.ipynb_checkpoints
 *.pyc
 nohup.out
-.vscode
+*__pycache__*
+*.vscode/*
 
