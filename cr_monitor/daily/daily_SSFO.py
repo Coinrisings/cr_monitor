@@ -56,7 +56,7 @@ class DailySSFO(DailyMonitorDTF):
                         'MV%': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}'}
-        now_situation = now_situation.style.format(format_dict).background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit'])
+        now_situation = now_situation.style.format(format_dict)#.background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit'])
         return now_situation
     
     def get_change(self):
@@ -132,13 +132,13 @@ class DailySSFO(DailyMonitorDTF):
             parameter_name = account_overall.loc[i, "account"]
             account = self.accounts[parameter_name]
             for day in [1, 3, 7]:
-                account_overall.loc[i, f"{day}d_rpnl%"] = rpnl[parameter_name][day]
+                account_overall.loc[i, f"{day}d_pnl%"] = rpnl[parameter_name][day]
                 account_overall.loc[i, f"{day}d_fpnl%"] = fpnl[parameter_name][day]
         self.account_overall = account_overall.copy()
         format_dict = {'capital': lambda x: format(round(x, 4), ","), 
-                        '1d_rpnl%': '{0:.4%}', 
-                        '3d_rpnl%': '{0:.4%}', 
-                        '7d_rpnl%': '{0:.4%}', 
+                        '1d_pnl%': '{0:.4%}', 
+                        '3d_pnl%': '{0:.4%}', 
+                        '7d_pnl%': '{0:.4%}', 
                         '1d_fpnl%': '{0:.4%}', 
                         '3d_fpnl%': '{0:.4%}', 
                         '7d_fpnl%': '{0:.4%}', 
@@ -147,7 +147,7 @@ class DailySSFO(DailyMonitorDTF):
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}',
                         }
-        account_overall = account_overall.style.format(format_dict).background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit','1d_rpnl%', '3d_rpnl%', '7d_rpnl%','1d_fpnl%', '3d_fpnl%', '7d_fpnl%'])
+        account_overall = account_overall.style.format(format_dict)#.background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit','1d_rpnl%', '3d_rpnl%', '7d_rpnl%','1d_fpnl%', '3d_fpnl%', '7d_fpnl%'])
         return account_overall
     
     def get_mv_monitor(self, start = "now() - 1d", end = "now()") -> dict:
