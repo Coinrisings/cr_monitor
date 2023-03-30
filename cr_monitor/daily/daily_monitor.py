@@ -230,7 +230,7 @@ class DailyMonitorDTO(object):
     
     def get_change(self):
         result, funding = eva.observe_dt_trend()
-        result.dropna(how = "all", inplace = True)
+        result.dropna(subset = "vol_24h", inplace = True)
         funding.dropna(how = "all", inplace = True)
         self.funding_summary = copy.deepcopy(result)
         self.funding = copy.deepcopy(funding)
@@ -242,7 +242,7 @@ class DailyMonitorDTO(object):
             else:
                 result[col] = result[col].apply(lambda x: float(x.replace(",", "")) if type(x) == str else np.nan)
                 format_dict[col] = lambda x: format(round(x, 0), ",")
-        funding_summary = result.style.format(format_dict).background_gradient(cmap='Blues')
+        funding_summary = result.style.applymap(set_funding_color).format(format_dict)#.background_gradient(cmap='Blues')
         return funding_summary
     
     def get_coin_parameter(self, coin: str, suffix = "-usd-swap") -> pd.DataFrame:
@@ -321,4 +321,12 @@ def set_color(val):
         color = 'orange'
     else:
         color = 'green'
+    return 'background-color: %s' % color
+
+def set_funding_color(val):
+    #set mr color
+    if val <=0:
+        color = 'red'
+    else:
+        color = 'black'
     return 'background-color: %s' % color
