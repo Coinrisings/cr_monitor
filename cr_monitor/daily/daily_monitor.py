@@ -189,7 +189,7 @@ class DailyMonitorDTO(object):
                         'MV%': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}'}
-        now_situation = now_situation.style.format(format_dict)#.background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit'])
+        now_situation = now_situation.style.applymap(set_funding_color).format(format_dict)#.background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit'])
         return now_situation
             
     def run_daily(self) -> pd.DataFrame:
@@ -225,7 +225,7 @@ class DailyMonitorDTO(object):
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}'
                         }
-        account_overall = account_overall.style.format(format_dict)#.background_gradient(cmap='Blues', subset = ["daily_pnl", "daily_pnl%", "MV%", "mr", 'week_profit'])
+        account_overall = account_overall.style.applymap(set_funding_color).format(format_dict)#.background_gradient(cmap='Blues', subset = ["daily_pnl", "daily_pnl%", "MV%", "mr", 'week_profit'])
         return account_overall
     
     def get_change(self):
@@ -324,9 +324,10 @@ def set_color(val):
     return 'background-color: %s' % color
 
 def set_funding_color(val):
-    #set mr color
-    if val <=0:
-        color = 'red'
+    ret = None
+    if type(val) == str or np.isnan(val):
+        return 
+    elif val >= 0:
+        return None
     else:
-        color = 'black'
-    return 'background-color: %s' % color
+        return 'background-color: red'

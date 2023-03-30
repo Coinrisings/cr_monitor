@@ -5,6 +5,7 @@ from cr_monitor.position.Position_DTC import PositionDTC
 import pandas as pd
 from research.eva import eva
 import datetime, copy
+from cr_monitor.daily.daily_monitor import set_color, set_funding_color
 
 class DailyDTC(DailySSFO):
     """DTC means master is usd_swap and slave is usdc_swap
@@ -46,5 +47,5 @@ class DailyDTC(DailySSFO):
                 format_dict[col] = '{0:.3%}'
             else:
                 format_dict[col] = lambda x: format(round(x, 0), ",")
-        funding_summary = result.style.format(format_dict)
+        funding_summary = result.style.applymap(set_funding_color).format(format_dict)
         return funding_summary

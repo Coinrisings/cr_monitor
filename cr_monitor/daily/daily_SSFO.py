@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from research.eva import eva
 from cr_assis.account.accountBase import AccountBase
+from cr_monitor.daily.daily_monitor import set_color, set_funding_color
 
 class DailySSFO(DailyMonitorDTF):
     def __init__(self, ignore_test=True):
@@ -28,7 +29,7 @@ class DailySSFO(DailyMonitorDTF):
         for data in position.origin_slave.values():
             data.set_index("time", inplace = True)
             data.dropna(how = "any", inplace = True)
-            mv += data["mv"].values[-1]
+            mv += data["mv"].values[-1] if len(data) > 0 else np.nan
         mv_precent = mv / account.adjEq
         return mv, mv_precent
     
@@ -57,7 +58,7 @@ class DailySSFO(DailyMonitorDTF):
                         'MV%': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}'}
-        now_situation = now_situation.style.format(format_dict)#.background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit'])
+        now_situation = now_situation.style.applymap(set_funding_color).format(format_dict)#.background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit'])
         return now_situation
     
     def get_change(self):
@@ -148,7 +149,7 @@ class DailySSFO(DailyMonitorDTF):
                         'mr': lambda x: format(round(x, 2), ","),
                         'week_profit': '{0:.4%}',
                         }
-        account_overall = account_overall.style.format(format_dict)#.background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit','1d_rpnl%', '3d_rpnl%', '7d_rpnl%','1d_fpnl%', '3d_fpnl%', '7d_fpnl%'])
+        account_overall = account_overall.style.applymap(set_funding_color).format(format_dict)#.background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit','1d_rpnl%', '3d_rpnl%', '7d_rpnl%','1d_fpnl%', '3d_fpnl%', '7d_fpnl%'])
         return account_overall
     
     def get_mv_monitor(self, start = "now() - 1d", end = "now()") -> dict:
@@ -165,21 +166,23 @@ class DailySSFO(DailyMonitorDTF):
         self.mv_monitor = mv_monitor
         return mv_monitor
     
-    def get_all_position(self, start = "now() - 5m", end = "now()") -> pd.DataFrame:
+    def get_all_position(self, start = "now() - 5m", end = "now()", is_color = False):
         mv_monitor = self.get_mv_monitor(start = start, end = end)
         all_position = pd.DataFrame(columns = list(mv_monitor.keys()))
         for account in all_position.columns:
             account_position = mv_monitor[account].copy()
             for pair in account_position.keys():
                 coin = pair.split("-")[0]
-                all_position.loc[coin, account] = account_position[pair].fillna(method='ffill')["mv%"].values[-1]
+                all_position.loc[coin, account] = account_position[pair].fillna(method='ffill')["mv%"].values[-1] if len(account_position[pair]) > 0 else np.nan
         all_position.sort_index(axis = 0, inplace = True)
         all_position.sort_index(axis = 1, inplace = True)
         all_position.loc["total"] = all_position.sum(axis = 0)
         self.all_position = all_position.copy()
+        if is_color:
+            all_position = all_position.fillna(0).style.background_gradient(cmap='Blues', subset = list(self.all_position.columns), vmax = 25, vmin = 0)
         return all_position
     
-    def get_position_change(self, start: str, end: str) -> pd.DataFrame:
+    def get_position_change(self, start: str, end: str, is_color = False) -> pd.DataFrame:
         before = self.get_all_position(start = f"{start} - 5m", end = start).fillna(0)
         after = self.get_all_position(start = f"{end} - 5m", end = end).fillna(0)
         coins = list(set(list(before.index.values)) | set(list(after.index.values)))
@@ -194,4 +197,6 @@ class DailySSFO(DailyMonitorDTF):
                 delta_position = position1 - position0
                 position_change.loc[coin, name] = delta_position
         position_change.sort_index(axis = 1, inplace = True)
+        if is_color:
+            position_change = position_change.style.background_gradient(cmap='Blues', subset = list(self.all_position.columns), vmax = 25, vmin = -25)
         return position_change
