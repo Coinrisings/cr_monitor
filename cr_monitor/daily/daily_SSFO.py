@@ -44,12 +44,10 @@ class DailySSFO(object):
         """get account situation now, like MV%, capital, ccy, mr
 
         Returns:
-            pd.DataFrame: columns = ["account", "capital", "ccy", "MV", "MV%", "mr", "week_profit"]
+            pd.DataFrame: columns = ["account", "capital", "ccy", "MV", "MV%", "mr"]
         """
         accounts = list(self.accounts.values())
-        now_situation = pd.DataFrame(columns = ["account", "capital", "ccy", "MV", "MV%", "mr", "week_profit"], index = range(len(accounts)))
-        start = "now() - 10m"
-        end = "now()"
+        now_situation = pd.DataFrame(columns = ["account", "capital", "ccy", "MV", "MV%", "mr"], index = range(len(accounts)))
         for i in now_situation.index:
             account = accounts[i]
             mv, mv_precent = self.get_now_mv_percent(account)
@@ -57,14 +55,12 @@ class DailySSFO(object):
             capital = account.get_mean_equity()
             ccy = account.principal_currency
             mr = account.mr["okex"]
-            profit = capital / account.get_mean_equity(the_time = "now() - 7d") - 1
-            now_situation.loc[i] = [account.parameter_name, capital, ccy, mv, round(mv_precent * 100, 4), mr, profit]
+            now_situation.loc[i] = [account.parameter_name, capital, ccy, mv, round(mv_precent * 100, 4), mr]
         self.now_situation = now_situation.copy()
         format_dict = {'capital': lambda x: format(round(x, 4), ","),  
                         'MV': '{0:.2f}', 
                         'MV%': '{0:.2f}', 
-                        'mr': lambda x: format(round(x, 2), ","),
-                        'week_profit': '{0:.4%}'}
+                        'mr': lambda x: format(round(x, 2), ",")}
         now_situation = now_situation.style.applymap(set_funding_color).format(format_dict)#.background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit'])
         return now_situation
     
@@ -133,30 +129,25 @@ class DailySSFO(object):
             writer.close()
         return funding_summary, volume_rate
     
-    def run_daily(self) -> pd.DataFrame:
+    def run_daily(self, is_fpnl = False) -> pd.DataFrame:
         rpnl = self.get_pnl_daily.get_rpnl()
-        fpnl = self.get_pnl_daily.get_fpnl()
+        fpnl = self.get_pnl_daily.get_fpnl() if is_fpnl else {}
         self.get_now_situation() if not hasattr(self, "now_situation") else None
         account_overall = self.now_situation.copy()
         for i in account_overall.index:
             parameter_name = account_overall.loc[i, "account"]
-            account = self.accounts[parameter_name]
             for day in [1, 3, 7]:
                 account_overall.loc[i, f"{day}d_pnl%"] = rpnl[parameter_name][day]
-                account_overall.loc[i, f"{day}d_fpnl%"] = fpnl[parameter_name][day]
+                if is_fpnl:
+                    account_overall.loc[i, f"{day}d_fpnl%"] = fpnl[parameter_name][day]
         self.account_overall = account_overall.copy()
         format_dict = {'capital': lambda x: format(round(x, 4), ","), 
-                        '1d_pnl%': '{0:.4%}', 
-                        '3d_pnl%': '{0:.4%}', 
-                        '7d_pnl%': '{0:.4%}', 
-                        '1d_fpnl%': '{0:.4%}', 
-                        '3d_fpnl%': '{0:.4%}', 
-                        '7d_fpnl%': '{0:.4%}', 
                         'MV%': '{0:.2f}', 
                         'MV': '{0:.2f}', 
-                        'mr': lambda x: format(round(x, 2), ","),
-                        'week_profit': '{0:.4%}',
-                        }
+                        'mr': lambda x: format(round(x, 2), ",")}
+        for col in account_overall.columns:
+            if "pnl%" in col:
+                format_dict[col] = '{0:.4%}'
         account_overall = account_overall.style.applymap(set_funding_color).format(format_dict)#.background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit','1d_rpnl%', '3d_rpnl%', '7d_rpnl%','1d_fpnl%', '3d_fpnl%', '7d_fpnl%'])
         return account_overall
     
