@@ -294,7 +294,6 @@ class DailyMonitorDTO(object):
                 now_position = account.now_position
             if "btc" in now_position.index:
                 account.get_equity()
-                #初始化账户
                 mr_dto = MrDTO(amount_u = now_position.loc["btc", "slave_number"] * 100,
                             amount_c = now_position.loc["btc", "master_number"],
                             amount_fund = account.adjEq / now_price,
@@ -302,7 +301,6 @@ class DailyMonitorDTO(object):
                             price_c = now_position.loc["btc", "master_open_price"],
                             now_price = now_price)
                 mr_dto.run_mmr(play = False)
-                #保留数据
                 self.mgnRatio[name] = copy.deepcopy(mr_dto)
                 self.picture_value = pd.concat([mr_dto.value_influence, self.picture_value], axis = 1, join = 'outer')
                 self.picture_spread = pd.concat([mr_dto.spread_influence, self.picture_spread], axis = 1, join = 'outer')

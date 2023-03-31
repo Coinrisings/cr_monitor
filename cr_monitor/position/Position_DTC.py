@@ -8,7 +8,7 @@ class PositionDTC(PositionSSFO):
         self.master = "usd_swap"
         self.slave = "usdc_swap"
         
-    def get_spot_price(self, coin: str) -> float:
+    def get_master_price(self, coin: str) -> float:
         price = self.get_redis_price(coin = coin, suffix = "usd-swap")
         return price
 

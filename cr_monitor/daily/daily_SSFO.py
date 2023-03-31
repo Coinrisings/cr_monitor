@@ -1,4 +1,4 @@
-from cr_monitor.daily.daily_monitor import set_color
+from cr_monitor.daily.daily_monitor import set_color, set_funding_color
 from cr_assis.connect.connectData import ConnectData
 import copy, sys, os, datetime
 from cr_assis.pnl.ssfoPnl import SsfoPnl
@@ -8,96 +8,23 @@ import pandas as pd
 import numpy as np
 from research.eva import eva
 from cr_assis.account.accountBase import AccountBase
-from cr_monitor.daily.daily_monitor import set_color, set_funding_color
+from cr_assis.account.initAccounts import InitAccounts
 
 class DailySSFO(object):
     def __init__(self, ignore_test=True):
         self.ignore_test = ignore_test
         self.database = ConnectData()
         self.strategy_name = "ssf_okexv5_spot_okexv5_uswap_btc"
+        self.combo = "okx_spot-okx_usdt_swap"
         self.position = PositionSSFO
+        self.accounts: dict[str, AccountBase]
         self.init_accounts()
         self.get_pnl_daily = SsfoPnl(accounts = list(self.accounts.values()))
     
-    def get_now_parameter(self, deploy_id: str) -> pd.DataFrame:
-        """获得mongo里面相应账户的信息"""
-        client = deploy_id.split("_")[0]
-        mongo_clt = MongoClient(os.environ["MONGO_URI"])
-        a = mongo_clt["Strategy_deploy"][client].find({"_id": deploy_id})
-        data = pd.DataFrame(a)
-        data = data[data["_id"] == deploy_id].copy()
-        data.index = range(len(data))
-        return data
-    
-    def get_all_deploys(self) -> list:
-        #获得所有启动的账户deploy_id
-        mongo_clt = MongoClient(os.environ["MONGO_URI"])
-        collections = mongo_clt["Strategy_orch"].list_collection_names()
-        deploy_ids = []
-        for key in collections:
-            a = mongo_clt["Strategy_orch"][key].find()
-            data = pd.DataFrame(a)
-            data = data[(data["orch"]) & (data["version"] != "0") & (data["version"] != None) & (data["version"] != "0")].copy()
-            deploy_ids += list(data["_id"].values)
-        deploy_ids.sort()
-        return deploy_ids
-    
-    def get_strategy_info(self, strategy: str):
-        """解析deployd_id的信息"""
-        words = strategy.split("_")
-        master = (words[1] + "_" + words[2]).replace("okexv5", "okx").replace("okex", "okx")
-        master = master.replace("uswap", "usdt_swap")
-        master = master.replace("cswap", "usd_swap")
-        master = master.replace("ufuture", "usdt_future")
-        master = master.replace("cfuture", "usd_future")
-        slave = (words[3] + "_" + words[4]).replace("okexv5", "okx").replace("okex", "okx")
-        slave = slave.replace("uswap", "usdt_swap")
-        slave = slave.replace("cswap", "usd_swap")
-        slave = slave.replace("ufuture", "usdt_future")
-        slave = slave.replace("cfuture", "usd_future")
-        ccy = words[-1].upper()
-        if ccy == "U":
-            ccy = "USDT"
-        elif ccy == "C":
-            ccy = "BTC"
-        else:
-            pass
-        return master, slave, ccy
-    
-    def get_bbu_info(self, strategy: str):
-        """解析bbu线的deploy_id信息"""
-        words = strategy.split("_")
-        exchange = words[1].replace("okexv5", "okx").replace("okex", "okx")
-        if exchange == "binance":
-            master = "binance_busd_swap"
-        else:
-            master = f"{exchange}_usdc_swap"
-        slave = f"{exchange}_usdt_swap"
-        ccy = strategy.split("_")[-1].upper()
-        if ccy in ["U", "BUSD"]:
-            ccy = "USDT"
-        else:
-            pass
-        return master, slave, ccy
-    
-    def init_accounts(self, is_usdc = False) -> None:
+    def init_accounts(self) -> None:
         """初始化所有指定策略线账户"""
-        deploy_ids = self.get_all_deploys()
-        accounts = {}
-        for deploy_id in deploy_ids:
-            parameter_name, strategy = deploy_id.split("@")
-            client, username = parameter_name.split("_")
-            judgement1 = self.strategy_name in strategy
-            if self.ignore_test:
-                judgement2 = client not in ["test", "lxy"]
-            else:
-                judgement2 = True
-            if judgement1 and judgement2:
-                #只监控指定策略线账户
-                accounts[parameter_name] = AccountBase(deploy_id = deploy_id, is_usdc= is_usdc)
-            else:
-                pass
-        self.accounts = accounts.copy()
+        self.init = InitAccounts(combo = self.combo, ignore_test= self.ignore_test)
+        self.accounts = self.init.init_accounts(is_usdc = False)
     
     def get_now_mv_percent(self, account: AccountBase) -> float:
         account.get_equity()
