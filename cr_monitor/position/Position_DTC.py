@@ -3,8 +3,8 @@ import pandas as pd
 
 class PositionDTC(PositionSSFO):
     
-    def __init__(self, amount_master={}, amount_slave={}, price_master={},price_slave={}, equity={"USDT": 10000}, client = "", username = "") -> None:
-        super().__init__(amount_master, amount_slave, price_master, price_slave, equity, client, username)
+    def __init__(self, client = "", username = "") -> None:
+        super().__init__(client, username)
         self.master = "usd_swap"
         self.slave = "usdc_swap"
         

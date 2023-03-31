@@ -16,7 +16,8 @@ class DailyDTC(DailySSFO):
         self.database = ConnectData()
         self.position = PositionDTC
         self.strategy_name = "dt_okex_cswap_okex_uswap_btc"
-        self.init_accounts(is_usdc= True)
+        self.combo = 'okx_usd_swap-okx_usdc_swap'
+        self.init_accounts()
         self.get_pnl_daily = DtcPnl(accounts = list(self.accounts.values()))
         
     def get_chance(self):
