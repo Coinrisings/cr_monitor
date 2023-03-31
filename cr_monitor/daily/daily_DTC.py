@@ -19,7 +19,7 @@ class DailyDTC(DailySSFO):
         self.init_accounts(is_usdc= True)
         self.get_pnl_daily = DtcPnl(accounts = list(self.accounts.values()))
         
-    def get_change(self):
+    def get_chance(self):
         self.funding_summary, self.funding, _ = eva.run_funding("okex", "usdc", "okex", "usd", datetime.date(2022,10,1), datetime.date.today(), play = True)
         self.funding_summary.drop(["last_dt", "1t"], inplace = True, axis = 1)
         self.funding_summary.dropna(subset = ["1d"], inplace = True)
