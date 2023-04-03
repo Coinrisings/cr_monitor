@@ -16,7 +16,7 @@ class MrSSFO(object):
         adjEq0 = copy.deepcopy(self.position.start_adjEq)
         now_price_master = copy.deepcopy(self.position.now_price_master)
         now_price_slave = copy.deepcopy(self.position.now_price_slave)
-        for change in np.arange(0.5, 1.6, 0.1):
+        for change in np.arange(0.3, 2, 0.1):
             change = round(change, 2)
             self.position.start_adjEq = adjEq0 * change
             self.position.adjEq = adjEq0 * change
