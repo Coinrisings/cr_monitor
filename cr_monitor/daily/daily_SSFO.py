@@ -9,6 +9,7 @@ import numpy as np
 from research.eva import evaw 
 from cr_assis.account.accountBase import AccountBase
 from cr_assis.account.initAccounts import InitAccounts
+from cr_monitor.mr.Mr_SSFO import MrSSFO
 
 class DailySSFO(object):
     def __init__(self, ignore_test=True):
@@ -199,3 +200,14 @@ class DailySSFO(object):
         if is_color:
             position_change = position_change.style.background_gradient(cmap='Blues', subset = list(self.all_position.columns), vmax = 25, vmin = -25)
         return position_change
+
+    def run_mr(self) -> pd.DataFrame.style:
+        account_mr = {}
+        for account in self.accounts.values():
+            account.mr_ssfo: PositionSSFO = MrSSFO(position=PositionSSFO())
+            account_mr[account.parameter_name] = account.mr_ssfo.run_account_mr(client = account.client, username = account.username)
+        self.account_mr = account_mr
+        mr_situation = pd.DataFrame(account_mr)
+        self.mr_situation = mr_situation.copy()
+        mr_situation = mr_situation.style.applymap(set_color)
+        return mr_situation
