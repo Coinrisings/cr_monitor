@@ -2,6 +2,7 @@ import ccxt, requests, copy
 import pandas as pd
 import numpy as np
 from cr_assis.connect.connectData import ConnectData
+from cr_monitor.position.disacount_data import DisacountData
 
 class PositionSSFO(object):
     """Define the position information of SSFO"""
@@ -14,6 +15,7 @@ class PositionSSFO(object):
         self.username:str  = username
         self.client:str  = client
         self.fee_rate = 0.002
+        self.discount_data = DisacountData()
         self.equity:dict[str, float]# the asset
         self.tiers_url:str  = 'https://www.okex.com/api/v5/public/position-tiers'
         self.discount_url:str  = "https://www.okex.com/api/v5/public/discount-rate-interest-free-quota"
@@ -33,7 +35,17 @@ class PositionSSFO(object):
         self.contract_slave[coin] = contractsize
         return contractsize
     
-    def get_discount_info(self, coin:str) -> list:
+    def get_discount_info(self, coin: str) -> list:
+        ret = []
+        for name in ["lv1", "lv2", "lv3", "lv4", "lv5", "lv6"]:
+            if coin in eval(f"self.discount_data.{name}")["coin"]:
+                ret = eval(f"self.discount_data.{name}")["info"]
+                break
+        if ret == []:
+            ret = self.get_discount_apiInfo(coin)
+        return ret
+    
+    def get_discount_apiInfo(self, coin:str) -> list:
         """get discount information of special coin through api
         Args:
             coin (str): str.upper()
@@ -223,6 +235,7 @@ class PositionSSFO(object):
         mv = account_position["mv"].sum()
         self.fee_mm = mv * self.fee_rate
         return copy.deepcopy(self.fee_mm)
+
     
     def cal_mr(self) -> float:
         self.get_start_adjEq() if not hasattr(self, "start_adjEq") else None
@@ -322,7 +335,7 @@ class PositionSSFO(object):
     def get_account_position(self) -> pd.DataFrame:
         self.get_now_position() if not hasattr(self, "amount_master") else None
         self.get_now_price_master() if not hasattr(self, "now_price_master") else None
-        adjEq = self.get_adjEq()
+        adjEq = self.get_adjEq() if not hasattr(self, "adjEq") else self.adjEq
         account_position = pd.DataFrame(columns = ["coin", "side", "position", "mv", "mv%"])
         num = 0
         for coin, amount in self.amount_master.items():
