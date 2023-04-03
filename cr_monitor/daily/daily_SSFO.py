@@ -205,8 +205,8 @@ class DailySSFO(object):
     def run_mr(self) -> pd.DataFrame.style:
         account_mr = {}
         for account in self.accounts.values():
-            account.mr_ssfo: PositionSSFO = MrSSFO(position=PositionSSFO())
-            account_mr[account.parameter_name] = account.mr_ssfo.run_account_mr(client = account.client, username = account.username)
+            account.cal_mr = self.mr(position=self.position())
+            account_mr[account.parameter_name] = account.cal_mr.run_account_mr(client = account.client, username = account.username)
         self.account_mr = account_mr
         mr_situation = pd.DataFrame(account_mr)
         self.mr_situation = mr_situation.copy()
