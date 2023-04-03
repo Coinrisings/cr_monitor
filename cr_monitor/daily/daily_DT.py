@@ -26,23 +26,20 @@ class DailyDT(DailyDTC):
         self.funding_summary.drop(["last_dt", "1t"], inplace = True, axis = 1)
         self.funding_summary.dropna(subset = ["1d", "volume_U_24h"], inplace = True)
         self.funding_summary.rename(columns = {"volume_U_24h": "vol_24h"}, inplace = True)
-        self.funding_summary = pd.concat(self.funding_summary.loc[["BTC", "ETH"]], self.funding_summary)
+        coins = list(self.funding_summary.index)
+        coins.remove("BTC")
+        coins.remove("ETH")
+        self.funding_summary = self.funding_summary.loc[["BTC", "ETH"] + coins]
         for col in ["1d", "3d", "7d", "15d", "30d"]:
             num = int(col.split("d")[0]) * 3
             self.funding_summary[col + "_avg"] = self.funding_summary[col] / num
         self.funding = self.funding.T
-        self.get_now_situation() if not hasattr(self, "now_situation") else None
         rate = pd.DataFrame(columns = ["next", "current"])
         for coin in self.funding_summary.index:
             data0 = eva.get_last_influx_funding(exchange_name="okex", pair_name=f"{coin.lower()}-usdt-swap")
             data1 = eva.get_last_influx_funding(exchange_name="okex", pair_name=f"{coin.lower()}-usd-swap")
             rate.loc[coin] = [data0["next_fee"].values[-1] - data1["next_fee"].values[-1], data0["rate"].values[-1] - data1["rate"].values[-1]]
-        all_position = self.get_all_position().fillna(0).drop("total")
-        for account in self.accounts.values():
-            self.funding_summary[account.parameter_name] = 0
-            for coin in all_position.index:
-                self.funding_summary.loc[coin.upper(), account.parameter_name] = all_position.loc[coin, account.parameter_name] / 100
-        self.funding_summary = pd.concat([rate, self.funding_summary], axis = 1)
+        self.funding_summary = pd.merge(rate, self.funding_summary, left_index = True, right_index = True, how = "outer")
         result = copy.deepcopy(self.funding_summary)
         format_dict = {}
         for col in result.columns:

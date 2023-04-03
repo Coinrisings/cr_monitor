@@ -154,7 +154,8 @@ class PositionDTC(PositionSSFO):
         adjEq = self.get_disacount_adjEq()
         mm_master, mm_slave, mm_upnl = self.cal_mm()
         self.get_fee_mm()
-        mr:float = adjEq / (sum(mm_master.values()) + sum(mm_slave.values()) + sum(mm_upnl.values()) + self.fee_mm)
+        mm = (sum(mm_master.values()) + sum(mm_slave.values()) + sum(mm_upnl.values()) + self.fee_mm)
+        mr:float = adjEq / mm if mm != 0 else np.nan
         self.mr = mr
         return mr
     
