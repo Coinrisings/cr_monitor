@@ -247,7 +247,6 @@ class PositionSSFO(object):
         self.fee_mm = mv * self.fee_rate
         return copy.deepcopy(self.fee_mm)
 
-    
     def cal_mr(self) -> float:
         self.get_start_adjEq() if not hasattr(self, "start_adjEq") else None
         self.get_upnl()

@@ -1,5 +1,6 @@
 from cr_monitor.position.Position_SSFO import PositionSSFO
 import pandas as pd
+import numpy as np
 import copy
 
 class PositionDTC(PositionSSFO):
@@ -17,11 +18,11 @@ class PositionDTC(PositionSSFO):
         self.spot_price: dict[str, float] = {}
         
     def get_master_price(self, coin: str) -> float:
-        price = self.get_redis_price(coin = coin, suffix = "usd-swap")
+        price = self.get_redis_price(coin = coin, suffix = self.master.replace("_", "-"))
         return price
 
     def get_slave_price(self, coin: str) -> float:
-        price = self.get_redis_price(coin = coin, suffix = "usdc-swap")
+        price = self.get_redis_price(coin = coin, suffix = self.slave.replace("_", "-"))
         return price
     
     def get_spot_price(self, coin: str) -> float:
@@ -30,13 +31,13 @@ class PositionDTC(PositionSSFO):
     
     def get_contractsize_slave(self, coin: str) -> float:
         coin = coin.upper()
-        contractsize = self.markets[f"{coin}/USD:USDC"]["contractSize"]
+        contractsize = self.markets[f"{coin}/USD:USDC"]["contractSize"] if f"{coin}/USD:USDC" in self.markets.keys() else np.nan
         self.contract_slave[coin] = contractsize
         return contractsize
     
     def get_contractsize_master(self, coin: str) -> float:
         coin = coin.upper()
-        contractsize = self.markets[f"{coin}/USD:{coin}"]["contractSize"]
+        contractsize = self.markets[f"{coin}/USD:{coin}"]["contractSize"] if f"{coin}/USD:{coin}" in self.markets.keys() else np.nan
         self.contract_master[coin] = contractsize
         return contractsize
     
@@ -46,20 +47,21 @@ class PositionDTC(PositionSSFO):
         return tier
     
     def get_tier_master(self, coin: str) -> pd.DataFrame:
-        tier = self.get_tier_swap(coin = coin, contract = "USD")
+        tier = self.get_tier_swap(coin = coin, contract = self.master.split("_")[0].upper())
         self.tier_master[coin.upper()] = tier
         return tier
     
     def get_tier_slave(self, coin: str) -> pd.DataFrame:
-        tier = self.get_tier_swap(coin = coin, contract = "USDC")
+        tier = self.get_tier_swap(coin = coin, contract = self.slave.split("_")[0].upper())
         self.tier_slave[coin.upper()] = tier
         return tier
     
     def get_origin_slave(self, start: str, end: str) -> dict:
         ret = super().get_origin_slave(start, end)
         pairs = list(ret.keys())
+        name = self.slave.split("_")[0]
         for pair in pairs:
-            if "usdc" != pair.split("-")[1]:
+            if name != pair.split("-")[1]:
                 del ret[pair]
         self.origin_slave = ret
         return ret
@@ -158,9 +160,15 @@ class PositionDTC(PositionSSFO):
     
     def get_now_position(self):
         super().get_now_position()
-        for coin, amount in self.amount_slave.items():
+        coins = list(self.amount_slave.keys())
+        for coin in coins:
+            amount = self.amount_slave[coin]
             size = self.contract_master[coin] if coin in self.contract_master.keys() else self.get_contractsize_master(coin)
-            self.amount_master[coin] = - round(amount * self.price_slave[coin] / size, 0)
+            if not np.isnan(size):
+                self.amount_master[coin] = - round(amount * self.price_slave[coin] / size, 0)
+            else:
+                del self.amount_master[coin]
+                del self.amount_slave[coin]
     
     def get_account_position(self) -> pd.DataFrame:
         account_position = super().get_account_position()
