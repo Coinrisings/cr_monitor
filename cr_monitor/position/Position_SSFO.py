@@ -278,7 +278,7 @@ class PositionSSFO(object):
     def get_redis_price(self, coin: str, suffix: str) -> float:
         self.load_redis_price() if not hasattr(self, "redis_clt") else None
         key = bytes(f"okexv5/{coin.lower()}-{suffix}", encoding="utf8")
-        price = float(self.redis_clt.hgetall(key)[b'bid0_price'])
+        price = float(self.redis_clt.hgetall(key)[b'bid0_price']) if key in self.redis_clt.keys() else np.nan
         return price
     
     def get_master_price(self, coin: str) -> float:
