@@ -1,0 +1,41 @@
+from cr_monitor.mr.Mr_SSFO import MrSSFO
+from cr_monitor.position.Position_DTC import PositionDTC
+import numpy as np
+import copy
+
+class MrDTC(MrSSFO):
+    
+    def __init__(self, position: PositionDTC):
+        super().__init__(position)
+        self.assumed_coins = {"BTC", "ETH"}
+    
+    def run_assumed_open(self):
+        self.position.amount_master = {coin: 0 for coin in self.assumed_coins}
+        ccy_price = self.position.get_master_price(coin = self.ccy)
+        now_price = self.position.get_now_price_master()
+        self.position.price_master = now_price
+        self.position.price_slave = copy.deepcopy(self.position.price_master)
+        coins_number = len(self.assumed_coins)
+        assumed_open:dict[float, dict[float, dict[float, float]]] = {}
+        for num in range(30, 100, 10):
+            ret = {}
+            for mul in np.arange(1, 3, 0.2):
+                mul = round(mul, 2)
+                single_mv = mul / coins_number * num * ccy_price
+                self.position.equity = {self.ccy: num}
+                self.position.adjEq = num * ccy_price
+                self.position.start_adjEq = num * ccy_price
+                self.position.liability = 0
+                assumed_holding = {}
+                for coin in self.assumed_coins:
+                    size = self.position.contract_master[coin] if coin in self.position.contract_master.keys() else self.position.get_contractsize_master(coin)
+                    assumed_holding[coin] = - single_mv / size
+                self.position.amount_master = copy.deepcopy(assumed_holding)
+                self.position.amount_slave = {coin: single_mv / now_price[coin] for coin in self.assumed_coins}
+                self.position.now_price_master = copy.deepcopy(self.position.price_master)
+                self.position.now_price_slave = copy.deepcopy(self.position.price_slave)
+                result = self.run_price_influence()
+                ret[mul] = copy.deepcopy(result)
+            assumed_open[num] = copy.deepcopy(ret)
+        self.assumed_open = assumed_open
+        return assumed_open

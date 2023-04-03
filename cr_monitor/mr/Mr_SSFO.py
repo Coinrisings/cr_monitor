@@ -27,6 +27,7 @@ class MrSSFO(object):
             result[change] = self.position.cal_mr()
         return result
 
+    
     def run_assumed_open(self):
         self.position.amount_master = {coin: 0 for coin in self.assumed_coins}
         ccy_price = self.position.get_master_price(coin = self.ccy)

@@ -211,3 +211,15 @@ class DailySSFO(object):
         self.mr_situation = mr_situation.copy()
         mr_situation = mr_situation.style.applymap(set_color)
         return mr_situation
+    
+    def run_assumed_situation(self):
+        mr = MrSSFO(position=self.position())
+        assumed_open = mr.run_assumed_open()
+        assumed_situation = pd.DataFrame()
+        for num in assumed_open.keys():
+            change = assumed_open[num]
+            for mul in change.keys():
+                assumed_situation.loc[mul, num] = change[mul][1]
+        self.mr = mr
+        self.assumed_situation = assumed_situation
+        return assumed_situation

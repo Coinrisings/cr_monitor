@@ -104,22 +104,30 @@ class PositionSSFO(object):
                 tiers.loc[i, col] = eval(data[i][col])
         return tiers
     
-    def get_tier_slave(self, coin: str) -> pd.DataFrame:
-        name = f"{coin.upper()}-USDT"
+    def get_tier_swap(self, coin: str, contract: str) -> pd.DataFrame:
+        name = name = f"{coin.upper()}-{contract}"
         data = self.get_tier(instType = "SWAP", 
                 tdMode = "cross",
                 instFamily= name,
                 instId= name,
                 tier="")["data"]
         tier = self.handle_origin_tier(data)
-        self.tier_slave[coin.upper()] = tier
         return tier
     
-    def get_tier_master(self, coin: str) -> pd.DataFrame:
+    def get_tier_spot(self, coin: str) -> pd.DataFrame:
         ret = self.get_tier(instType = "MARGIN", 
             tdMode = "cross",
             ccy = coin.upper())
         tier = self.handle_origin_tier(ret["data"])
+        return tier
+    
+    def get_tier_slave(self, coin: str) -> pd.DataFrame:
+        tier = self.get_tier_swap(coin = coin, contract = "USDT")
+        self.tier_slave[coin.upper()] = tier
+        return tier
+    
+    def get_tier_master(self, coin: str) -> pd.DataFrame:
+        tier = self.get_tier_spot(coin = coin)
         self.tier_master[coin.upper()] = tier
         return tier
     
@@ -129,12 +137,15 @@ class PositionSSFO(object):
             amount (float): the amount of spot asset or swap contract
             tier (pd.DataFrame): the position tier information
         """
-        mmr = np.nan
-        for i in tier.index:
-            if amount > tier.loc[i, "minSz"] and amount <= tier.loc[i, "maxSz"]:
-                mmr = tier.loc[i, "mmr"]
-                break
-        return mmr
+        if amount <= 0:
+            return 0
+        else:
+            mmr = np.nan
+            for i in tier.index:
+                if amount > tier.loc[i, "minSz"] and amount <= tier.loc[i, "maxSz"]:
+                    mmr = tier.loc[i, "mmr"]
+                    break
+            return mmr
     
     def get_mmr_master(self, coin: str, amount: float) -> float:
         """get mmr of master, which is spot
@@ -167,7 +178,7 @@ class PositionSSFO(object):
         return copy.deepcopy(self.liability)
     
     def get_start_adjEq(self):
-        self.get_equity() if not hasattr(self, "euqity") else None
+        self.get_equity() if not hasattr(self, "equity") else None
         self.get_now_position() if not hasattr(self, "amount_master") else None
         self.get_liability()
         ccy = list(self.equity.keys())[0].upper()
@@ -226,7 +237,7 @@ class PositionSSFO(object):
         return mm_slave
 
     def cal_mm(self) -> tuple[dict[str, float], dict[str, float]]:
-        mmr_master, mmr_slave = self.get_mmr()
+        self.get_mmr()
         self.mm_master, self.mm_slave = self.cal_mm_master(), self.cal_mm_slave()
         return copy.deepcopy(self.mm_master), copy.deepcopy(self.mm_slave)
         
