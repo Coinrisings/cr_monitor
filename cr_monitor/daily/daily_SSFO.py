@@ -6,7 +6,7 @@ from cr_monitor.position.Position_SSFO import PositionSSFO
 from pymongo import MongoClient
 import pandas as pd
 import numpy as np
-from research.eva import evaw 
+from research.eva import eva
 from cr_assis.account.accountBase import AccountBase
 from cr_assis.account.initAccounts import InitAccounts
 from cr_monitor.mr.Mr_SSFO import MrSSFO
