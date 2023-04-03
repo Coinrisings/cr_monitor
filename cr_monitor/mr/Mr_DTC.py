@@ -6,7 +6,8 @@ import copy
 class MrDTC(MrSSFO):
     
     def __init__(self, position: PositionDTC):
-        super().__init__(position)
+        self.position = position
+        self.ccy = "BTC"
         self.assumed_coins = {"BTC", "ETH"}
     
     def run_assumed_open(self):
@@ -17,7 +18,7 @@ class MrDTC(MrSSFO):
         self.position.price_slave = copy.deepcopy(self.position.price_master)
         coins_number = len(self.assumed_coins)
         assumed_open:dict[float, dict[float, dict[float, float]]] = {}
-        for num in range(30, 100, 10):
+        for num in range(30, 110, 10):
             ret = {}
             for mul in np.arange(1, 3, 0.2):
                 mul = round(mul, 2)

@@ -5,6 +5,7 @@ from cr_monitor.position.Position_DTC import PositionDTC
 import pandas as pd
 from research.eva import eva
 import datetime, copy
+from cr_monitor.mr.Mr_DTC import MrDTC
 from cr_monitor.daily.daily_monitor import set_color, set_funding_color
 
 class DailyDTC(DailySSFO):
@@ -15,6 +16,7 @@ class DailyDTC(DailySSFO):
         self.ignore_test = ignore_test
         self.database = ConnectData()
         self.position = PositionDTC
+        self.mr = MrDTC
         self.strategy_name = "dt_okex_cswap_okex_uswap_btc"
         self.combo = 'okx_usd_swap-okx_usdc_swap'
         self.init_accounts()

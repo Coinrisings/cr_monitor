@@ -18,6 +18,7 @@ class DailySSFO(object):
         self.strategy_name = "ssf_okexv5_spot_okexv5_uswap_btc"
         self.combo = "okx_spot-okx_usdt_swap"
         self.position = PositionSSFO
+        self.mr = MrSSFO
         self.accounts: dict[str, AccountBase]
         self.init_accounts()
         self.get_pnl_daily = SsfoPnl(accounts = list(self.accounts.values()))
@@ -213,7 +214,7 @@ class DailySSFO(object):
         return mr_situation
     
     def run_assumed_situation(self):
-        mr = MrSSFO(position=self.position())
+        mr = self.mr(position=self.position())
         assumed_open = mr.run_assumed_open()
         assumed_situation = pd.DataFrame()
         for num in assumed_open.keys():
