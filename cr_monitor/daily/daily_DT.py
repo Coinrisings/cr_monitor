@@ -21,7 +21,7 @@ class DailyDT(DailyDTC):
         self.get_pnl_daily = DtcPnl(accounts = list(self.accounts.values()))
     
     def get_chance(self):
-        eva.run_funding("okex", "usdt", "okex", "usd", datetime.date(2021,1,1), datetime.date.today(), play = True, input_coins=["BTC", "ETH"])
+        eva.run_funding("okex", "usdt", "okex", "usd", datetime.date(2021,1,1), datetime.date.today(), play = True, input_coins=["BTC", "ETH", "ETC"])
         self.funding_summary, self.funding, _ = eva.run_funding("okex", "usdt", "okex", "usd", datetime.date.today() + datetime.timedelta(days = -33), datetime.date.today(), play = False)
         self.funding_summary.drop(["last_dt", "1t"], inplace = True, axis = 1)
         self.funding_summary.dropna(subset = ["1d", "volume_U_24h"], inplace = True)

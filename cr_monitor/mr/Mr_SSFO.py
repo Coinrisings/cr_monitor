@@ -9,6 +9,8 @@ class MrSSFO(object):
     def __init__(self, position: PositionSSFO):
         self.position = position
         self.ccy = "BTC"
+        self.price_range = np.arange(0.3, 2, 0.1)
+        self.mul_range = np.arange(0.5, 1.6, 0.1)
         self.assumed_coins = {"BLUR", "AR", "GFT", "FIL", "ARB", "PEOPLE", "ETH", "SUSHI", "ICP", "THETA"}
     
     def run_price_influence(self) -> dict[float, float]:
@@ -16,7 +18,7 @@ class MrSSFO(object):
         adjEq0 = copy.deepcopy(self.position.start_adjEq)
         now_price_master = copy.deepcopy(self.position.now_price_master)
         now_price_slave = copy.deepcopy(self.position.now_price_slave)
-        for change in np.arange(0.3, 2, 0.1):
+        for change in self.price_range:
             change = round(change, 2)
             self.position.start_adjEq = adjEq0 * change
             self.position.adjEq = adjEq0 * change
@@ -38,7 +40,7 @@ class MrSSFO(object):
         assumed_open:dict[float, dict[float, dict[float, float]]] = {}
         for num in range(30, 100, 10):
             ret = {}
-            for mul in np.arange(0.5, 1.6, 0.1):
+            for mul in self.mul_range:
                 mul = round(mul, 2)
                 single_mv = mul / coins_number * num * ccy_price
                 assumed_holding = {coin: single_mv / now_price[coin] for coin in self.assumed_coins}

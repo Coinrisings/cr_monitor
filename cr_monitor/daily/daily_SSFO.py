@@ -202,10 +202,11 @@ class DailySSFO(object):
             position_change = position_change.style.background_gradient(cmap='Blues', subset = list(self.all_position.columns), vmax = 25, vmin = -25)
         return position_change
 
-    def run_mr(self) -> pd.DataFrame.style:
+    def run_mr(self, price_range = np.arange(0.3, 2, 0.1)) -> pd.DataFrame.style:
         account_mr = {}
         for account in self.accounts.values():
             account.cal_mr = self.mr(position=self.position())
+            account.cal_mr.price_range = price_range
             account_mr[account.parameter_name] = account.cal_mr.run_account_mr(client = account.client, username = account.username)
         self.account_mr = account_mr
         mr_situation = pd.DataFrame(account_mr)
@@ -213,8 +214,10 @@ class DailySSFO(object):
         mr_situation = mr_situation.style.applymap(set_color)
         return mr_situation
     
-    def run_assumed_situation(self):
+    def run_assumed_situation(self, mul_range = np.arange(0.5, 2, 0.1), price_range = np.arange(0.3, 2, 0.1)):
         mr = self.mr(position=self.position())
+        mr.mul_range = mul_range
+        mr.price_range = price_range
         assumed_open = mr.run_assumed_open()
         assumed_situation = pd.DataFrame()
         for num in assumed_open.keys():
