@@ -7,11 +7,8 @@ from cr_monitor.mr.Mr_DTC import MrDTC
 import pandas as pd
 import copy
 
-
-
-
-dt = MrDT(position = PositionDT())
-# ret = dt.run_assumed_open()
+dt = MrDTC(position = PositionDTC())
+ret = dt.run_assumed_open()
 ret = dt.run_account_mr(client = "ch", username = "ch003")
 print(ret)
 

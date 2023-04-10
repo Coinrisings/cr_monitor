@@ -31,7 +31,7 @@ class PositionDTC(PositionSSFO):
     
     def get_contractsize_slave(self, coin: str) -> float:
         coin = coin.upper()
-        contractsize = self.markets[f"{coin}/USD:USDC"]["contractSize"] if f"{coin}/USD:USDC" in self.markets.keys() else np.nan
+        contractsize = self.markets[f"{coin}/USDC:USDC"]["contractSize"] if f"{coin}/USDC:USDC" in self.markets.keys() else np.nan
         self.contract_slave[coin] = contractsize
         return contractsize
     
