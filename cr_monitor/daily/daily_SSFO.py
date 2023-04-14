@@ -60,7 +60,7 @@ class DailySSFO(object):
             now_situation.loc[i] = [account.parameter_name, capital, ccy, mv, round(mv_precent * 100, 4), mr]
         self.now_situation = now_situation.copy()
         format_dict = {'capital': lambda x: format(round(x, 4), ","),  
-                        'MV': '{0:.2f}', 
+                        'MV': lambda x: format(round(x, 2), ","), 
                         'MV%': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ",")}
         now_situation = now_situation.style.applymap(set_funding_color).format(format_dict)#.background_gradient(cmap='Blues', subset = ["MV%", "mr", 'week_profit'])
@@ -144,8 +144,8 @@ class DailySSFO(object):
                     account_overall.loc[i, f"{day}d_fpnl%"] = fpnl[parameter_name][day]
         self.account_overall = account_overall.copy()
         format_dict = {'capital': lambda x: format(round(x, 4), ","), 
+                        'MV': lambda x: format(round(x, 2), ","), 
                         'MV%': '{0:.2f}', 
-                        'MV': '{0:.2f}', 
                         'mr': lambda x: format(round(x, 2), ",")}
         for col in account_overall.columns:
             if "pnl%" in col:
