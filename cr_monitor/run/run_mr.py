@@ -7,7 +7,12 @@ from cr_monitor.mr.Mr_DTC import MrDTC
 import pandas as pd
 import copy
 
-dt = MrDTC(position = PositionDTC())
+
+p = PositionSSFO(client = "test", username = "otest5")
+p.get_now_position()
+p.now_price_master = {"ETH": 1894, "ETC": 20.849}
+p.now_price_slave = {"ETH": 1894, "ETC": 20.849}
+dt = MrSSFO(position = PositionSSFO())
 ret = dt.run_assumed_open()
 ret = dt.run_account_mr(client = "ch", username = "ch003")
 print(ret)
