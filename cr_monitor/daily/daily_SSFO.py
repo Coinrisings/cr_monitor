@@ -169,6 +169,8 @@ class DailySSFO(object):
     
     def get_all_position(self, start = "now() - 5m", end = "now()", is_color = False):
         mv_monitor = self.get_mv_monitor(start = start, end = end)
+        if len(mv_monitor) == 0:
+            return pd.DataFrame(index = ["total"], columns = ["nan"])
         all_position = pd.DataFrame(columns = list(mv_monitor.keys()))
         for account in all_position.columns:
             account_position = mv_monitor[account].copy()
@@ -177,7 +179,7 @@ class DailySSFO(object):
                 all_position.loc[coin, account] = account_position[pair].fillna(method='ffill')["mv%"].values[-1] if len(account_position[pair]) > 0 else np.nan
         all_position.sort_index(axis = 0, inplace = True)
         all_position.sort_index(axis = 1, inplace = True)
-        all_position.loc["total"] = all_position.sum(axis = 0)
+        all_position.loc["total"] = all_position.sum(axis = 0) if len(all_position) > 0 else 0
         self.all_position = all_position.copy()
         if is_color:
             all_position = all_position.fillna(0).style.background_gradient(cmap='Blues', subset = list(self.all_position.columns), vmax = 25, vmin = 0)

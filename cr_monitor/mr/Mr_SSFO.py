@@ -10,6 +10,7 @@ class MrSSFO(object):
         self.position = position
         self.ccy = "BTC"
         self.price_range = np.arange(0.3, 2, 0.1)
+        self.num_range = range(30, 110, 10)
         self.mul_range = np.arange(0.5, 1.6, 0.1)
         self.assumed_coins = {"BLUR", "AR", "GFT", "FIL", "ARB", "PEOPLE", "ETH", "SUSHI", "ICP", "THETA"}
     
@@ -38,7 +39,7 @@ class MrSSFO(object):
         self.position.price_slave = copy.deepcopy(self.position.price_master)
         coins_number = len(self.assumed_coins)
         assumed_open:dict[float, dict[float, dict[float, float]]] = {}
-        for num in range(30, 100, 10):
+        for num in self.num_range:
             ret = {}
             for mul in self.mul_range:
                 mul = round(mul, 2)
