@@ -212,7 +212,8 @@ class PositionSSFO(object):
         return now_price
 
     def get_mmr(self) -> tuple[dict[str, float], dict[str, float]]:
-        mmr_master = {"USDT": self.get_mmr_master(coin = "USDT", amount = self.liability + sum(self.upnl.values()))}
+        mmr_master = {"USDT": self.get_mmr_master(coin = "USDT", 
+                                                amount = self.liability + sum(self.upnl.values()) if list(self.equity.keys())[0] != "USDT" else max(self.equity["USDT"] - self.liability + sum(self.upnl.values()), 0))}
         mmr_slave: dict[str, float] = {}
         for coin, amount in self.amount_slave.items():
             mmr_slave[coin] = self.get_mmr_slave(coin = coin, amount = abs(amount))
@@ -255,6 +256,7 @@ class PositionSSFO(object):
         self.get_fee_mm()
         mr:float = adjEq / (sum(mm_master.values()) + sum(mm_slave.values()) + self.fee_mm)
         self.mr = mr
+        self.real_adjEq = adjEq
         return mr
     
     def get_origin_slave(self, start: str, end: str) -> dict[str, pd.DataFrame]:

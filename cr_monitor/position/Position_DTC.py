@@ -157,6 +157,7 @@ class PositionDTC(PositionSSFO):
         mm = (sum(mm_master.values()) + sum(mm_slave.values()) + sum(mm_upnl.values()) + self.fee_mm)
         mr:float = adjEq / mm if mm != 0 else np.nan
         self.mr = mr
+        self.real_adjEq = adjEq
         return mr
     
     def get_now_position(self):
