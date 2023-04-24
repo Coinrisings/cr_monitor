@@ -1,6 +1,24 @@
 from cr_assis.load import *
 print(f"running time: {datetime.datetime.now()}")
 import requests
+from github import Github
+import io
+towrite = io.BytesIO()
+path = os.environ['HOME'] + "/.git-credentials"
+with open(path, "r") as f:
+    config = f.read()
+    access_token = config.split(":")[-1].split("@")[0]
+g = Github(login_or_token= access_token)
+repo = g.get_repo("Coinrisings/parameters")
+now = datetime.datetime.now()
+df = pd.DataFrame(columns = ["1", "2", "3"])
+df.loc[1] = [1,1,1]
+df.loc[2] = [2,2,2]
+df.loc[3] = [3,3,3]
+df.to_excel(towrite)
+data = towrite.getvalue()
+name = f"excel/ssf/"+ "test.xlsx"
+repo.create_file(name, f"uploaded by buffett at {datetime.datetime.now()}", data)
 
 def find_mmr(amount: float, tier: pd.DataFrame) -> float:
         mmr = np.nan

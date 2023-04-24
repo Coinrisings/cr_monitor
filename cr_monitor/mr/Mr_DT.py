@@ -8,7 +8,7 @@ class MrDT(MrDTC):
         self.position = position
         self.ccy = "BTC"
         self.assumed_coins = {"BTC"}
-        self.not_long = {}
+        self.short = {}
         self.num_range = range(30, 110, 10)
         self.price_range = np.arange(0.3, 2, 0.1)
         self.mul_range = np.arange(1, 3, 0.2)

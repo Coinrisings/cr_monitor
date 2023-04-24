@@ -36,9 +36,9 @@ class MrDTC(MrSSFO):
                 assumed_holding = {}
                 for coin in self.assumed_coins:
                     size = self.position.contract_master[coin] if coin in self.position.contract_master.keys() else self.position.get_contractsize_master(coin)
-                    assumed_holding[coin] = - single_mv / size
+                    assumed_holding[coin] = - single_mv / size if coin in self.short else single_mv / size
                 self.position.amount_master = copy.deepcopy(assumed_holding)
-                self.position.amount_slave = {coin: single_mv / now_price[coin] for coin in self.assumed_coins}
+                self.position.amount_slave = {coin: single_mv / now_price[coin] if coin in self.short else - single_mv / now_price[coin] for coin in self.assumed_coins}
                 self.position.now_price_master = copy.deepcopy(self.position.price_master)
                 self.position.now_price_slave = copy.deepcopy(self.position.price_slave)
                 result, all_result = self.run_price_influence()

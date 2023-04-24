@@ -9,7 +9,7 @@ class PositionDTC(PositionSSFO):
         super().__init__(client, username)
         self.master = "usd_swap"
         self.slave = "usdc_swap"
-        self.fee_rate = 0.003
+        self.fee_rate = 0.002
         self.amount_master: dict[str, float] # the amount of contract, not coin number, not dollar value
         self.contract_master: dict[str, float] = {}
         self.upnl_master: dict[str, float]
@@ -135,8 +135,7 @@ class PositionDTC(PositionSSFO):
             amount -= self.equity[coin] if coin in self.equity.keys() else 0
             tier = self.tier_upnl[coin] if coin in self.tier_upnl.keys() else self.get_tier_upnl(coin)
             mmr_upnl[coin] = self.find_mmr(amount = amount, tier = tier)
-            price = self.spot_price[coin] if coin in self.spot_price.keys() else self.get_spot_price(coin)
-            self.spot_price[coin] = price
+            price = self.now_price_master[coin] if coin in self.now_price_master.keys() else self.get_spot_price(coin)
             mm_upnl[coin] = mmr_upnl[coin] * price * self.upnl_master[coin]
         self.mm_upnl, self.mmr_upnl = mm_upnl, mmr_upnl
         return copy.deepcopy(self.mm_upnl)
