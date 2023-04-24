@@ -77,6 +77,6 @@ class MrSSFO(object):
         self.position.client = client
         self.position.username = username
         self.position.cal_mr()
-        ret = self.run_price_influence()
+        ret, _ = self.run_price_influence()
         self.account_mr = ret
         return ret
