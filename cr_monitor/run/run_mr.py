@@ -9,10 +9,15 @@ import pandas as pd
 import numpy as np
 import copy
 
-mr_dtc = MrDTC(position = PositionDTC())
-mr_dtc.run_account_mr(client = "ht", username= "ht001")
-# mr_dtc.detail_open = mr_dtc.detail_mr
+des = 1
+mr_dtc = MrDTC(position = PositionDTC(client = "ht", username="ht001"))
+# mr_dtc.mul_range = np.arange(0.5, 2.1, 0.1)
+# mr_dtc.num_range = np.arange(15, 55, 5)
 # ret = mr_dtc.run_assumed_open()
+mr_dtc.position.get_now_position()
+mr_dtc.position.amount_master["BTC"] = mr_dtc.position.amount_master["BTC"] * des
+mr_dtc.position.amount_slave["BTC"] = mr_dtc.position.amount_slave["BTC"] * des
+mr_dtc.run_account_mr(client = "ht", username= "ht001")
 
 mr_dt = MrDT(position = PositionDT())
 mr_dt.mul_range = np.arange(0.1, 1.1, 0.1)
@@ -38,7 +43,6 @@ for mul in result.keys():
     for change in result[mul].keys():
         summary.loc[change, mul] = result[mul][change]
 summary.sort_index(inplace = True)
-summary
 
 result = {}
 for num in set(mr_dtc.detail_open.keys()) & set(mr_dt.detail_open.keys()):
@@ -58,7 +62,7 @@ for num in set(mr_dtc.detail_open.keys()) & set(mr_dt.detail_open.keys()):
     result[num] = copy.deepcopy(dtc_ret)
 result
 summary = pd.DataFrame()
-num = 15
+num = 50
 data = result[num]
 for mul_dtc in data.keys():
     for mul_dt in data[mul_dtc].keys():

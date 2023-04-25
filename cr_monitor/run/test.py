@@ -2,23 +2,38 @@ from cr_assis.load import *
 print(f"running time: {datetime.datetime.now()}")
 import requests
 from github import Github
-import io
-towrite = io.BytesIO()
-path = os.environ['HOME'] + "/.git-credentials"
-with open(path, "r") as f:
-    config = f.read()
-    access_token = config.split(":")[-1].split("@")[0]
-g = Github(login_or_token= access_token)
-repo = g.get_repo("Coinrisings/parameters")
-now = datetime.datetime.now()
-df = pd.DataFrame(columns = ["1", "2", "3"])
-df.loc[1] = [1,1,1]
-df.loc[2] = [2,2,2]
-df.loc[3] = [3,3,3]
-df.to_excel(towrite)
-data = towrite.getvalue()
-name = f"excel/ssf/"+ "test.xlsx"
-repo.create_file(name, f"uploaded by buffett at {datetime.datetime.now()}", data)
+import io, imaplib, email, yaml
+
+from imap_tools import MailBox
+with open(f"{os.environ['HOME']}/.cr_assis/mongo_url.yml", "rb") as f:
+    data = yaml.load(f, Loader= yaml.SafeLoader)
+for info in data:
+    if "name" in info.keys() and info["name"] == "gmail":
+        email_account = info["address"]
+        password = info["password"]
+# get all attachments from INBOX and save them to files
+with MailBox('imap.gmail.com').login(email_account, password, 'INBOX') as mailbox:
+    for msg in mailbox.fetch():
+        if msg.from_ == "coinrising111@outlook.com":
+            for att in msg.attachments:
+                with open('/Users/chelseyshao/Downloads/{}'.format(att.filename), 'wb') as f:
+                    f.write(att.payload)
+
+email_account = "ssh21927@gmail.com"
+
+m = imaplib.IMAP4_SSL('imap.gmail.com')
+m.login(email_account, password="jvmkvzkrijzykttk")
+m.select("INBOX")
+status, data = m.search(None, 'ALL')
+for num in data[0].split():
+    status, data = m.fetch(num, '(RFC822)')
+    email_message = email.message_from_bytes(data[0][1])
+    if email_message["From"] == "l l <coinrising111@outlook.com>":
+        print('From:', email_message['From'])
+        print('Subject:', email_message['Subject'])
+        print('Date:', email_message['Date'])
+        print('Body:', email_message.get_payload(decode=True))
+        print()
 
 def find_mmr(amount: float, tier: pd.DataFrame) -> float:
         mmr = np.nan
