@@ -47,7 +47,7 @@ class DisacountData(object):
             "LOOKS", "LPT", "LUNC", "MAGIC", "MASK", "MINA", "MKR", "NFT",
             "ONT", "OP", "PERP", "REN", "RSR", "RSS3", "RVN", "SLP", "SNT",
             "SNX", "STARL", "STORJ", "STX", "SWEAT", "THETA", "TON", "TRB",
-            "UMA", "USTC", "WAVES", "WOO", "XCH", "YGG", "ZEN", "ZIL", "ZRX"],
+            "UMA", "USTC", "WAVES", "WOO", "XCH", "YGG", "ZEN", "ZIL", "ZRX", "PEPE", "AIDOGE", "SUI"],
             "info": [{'discountRate': '0.5', 'maxAmt': '50000', 'minAmt': '0'},
                 {'discountRate': '0', 'maxAmt': '', 'minAmt': '50000'}]
         }

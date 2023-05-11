@@ -9,40 +9,40 @@ import pandas as pd
 import numpy as np
 import copy
 
-des = 1
-mr_dtc = MrDTC(position = PositionDTC(client = "ht", username="ht001"))
-# mr_dtc.mul_range = np.arange(0.5, 2.1, 0.1)
-# mr_dtc.num_range = np.arange(15, 55, 5)
-# ret = mr_dtc.run_assumed_open()
-mr_dtc.position.get_now_position()
-mr_dtc.position.amount_master["BTC"] = mr_dtc.position.amount_master["BTC"] * des
-mr_dtc.position.amount_slave["BTC"] = mr_dtc.position.amount_slave["BTC"] * des
-mr_dtc.run_account_mr(client = "ht", username= "ht001")
+mr_dtc = MrDTC(position = PositionDTC())
+mr_dtc.mul_range = np.arange(0.75, 0.8, 0.05)
+mr_dtc.num_range = np.arange(50, 55, 5)
+mr_dtc.assumed_coins = ["ETH"]
+ret = mr_dtc.run_assumed_open()
+# mr_dtc.position.get_now_position()
+# mr_dtc.position.amount_master["ETH"] *= 1.2
+# mr_dtc.position.amount_slave["ETH"] *= 1.2
+# mr_dtc.run_account_mr(client = "cr", username= "cr001")
 
 mr_dt = MrDT(position = PositionDT())
-mr_dt.mul_range = np.arange(0.1, 1.1, 0.1)
-mr_dt.num_range = np.arange(15, 20, 5)
-mr_dt.assumed_coins = ["ETC"]
+mr_dt.mul_range = np.arange(1, 2, 0.1)
+mr_dt.num_range = np.arange(50, 55, 5)
+mr_dt.assumed_coins = ["BTC"]
 ret = mr_dt.run_assumed_open()
 
-num = 15
-mr_dt.detail_mr = mr_dt.detail_open[num]
-result = {}
-for mul in mr_dt.detail_open[num].keys():
-    change_ret = {}
-    for change in set(mr_dtc.detail_mr.keys()) & set(mr_dt.detail_open[num][mul].keys()):
-        dict1 = mr_dtc.detail_mr[change]
-        dict2 = mr_dt.detail_open[num][mul][change]
-        adjEq = min(dict1["adjEq"], dict2["adjEq"])
-        mm = sum(dict1["mm_master"].values()) + sum(dict1["mm_slave"].values()) + sum(dict1["mm_upnl"].values()) + dict1["fee_mm"]+ sum(dict2["mm_master"].values()) + sum(dict2["mm_slave"].values()) + sum(dict2["mm_upnl"].values()) + dict2["fee_mm"]
-        change_ret[change] = adjEq / mm
-    result[mul] = copy.deepcopy(change_ret)
+# num = 22
+# mr_dt.detail_mr = mr_dt.detail_open[num]
+# result = {}
+# for mul in mr_dt.detail_open[num].keys():
+#     change_ret = {}
+#     for change in set(mr_dtc.detail_mr.keys()) & set(mr_dt.detail_open[num][mul].keys()):
+#         dict1 = mr_dtc.detail_mr[change]
+#         dict2 = mr_dt.detail_open[num][mul][change]
+#         adjEq = min(dict1["adjEq"], dict2["adjEq"])
+#         mm = sum(dict1["mm_master"].values()) + sum(dict1["mm_slave"].values()) + sum(dict1["mm_upnl"].values()) + dict1["fee_mm"]+ sum(dict2["mm_master"].values()) + sum(dict2["mm_slave"].values()) + sum(dict2["mm_upnl"].values()) + dict2["fee_mm"]
+#         change_ret[change] = adjEq / mm
+#     result[mul] = copy.deepcopy(change_ret)
 
-summary = pd.DataFrame()
-for mul in result.keys():
-    for change in result[mul].keys():
-        summary.loc[change, mul] = result[mul][change]
-summary.sort_index(inplace = True)
+# summary = pd.DataFrame()
+# for mul in result.keys():
+#     for change in result[mul].keys():
+#         summary.loc[change, mul] = result[mul][change]
+# summary.sort_index(inplace = True)
 
 result = {}
 for num in set(mr_dtc.detail_open.keys()) & set(mr_dt.detail_open.keys()):
