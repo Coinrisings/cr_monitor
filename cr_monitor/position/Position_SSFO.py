@@ -28,7 +28,6 @@ class PositionSSFO(object):
         self.price_master:dict[str, float] # the average open price of master asset
         self.price_slave:dict[str, float] # the average price of slave in holding position
         
-    
     def get_contractsize_slave(self, coin: str) -> float:
         coin = coin.upper()
         contractsize = self.markets[f"{coin}/USDT:USDT"]["contractSize"]
