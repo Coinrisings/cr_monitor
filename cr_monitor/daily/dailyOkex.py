@@ -33,7 +33,7 @@ class DailyOkex(object):
         self.init = InitAccounts(ignore_test= self.ignore_test)
         self.accounts = self.init.init_accounts_okex()
     
-    def get_all_position(self, is_color = True) -> pd.DataFrame | Styler:
+    def get_all_position(self, is_color = True):
         self.color = pd.DataFrame()
         for name, account in self.accounts.items():
             position = account.get_account_position()
@@ -47,7 +47,7 @@ class DailyOkex(object):
         ret = self.all_position.copy() if not is_color else self.all_position.style.apply(set_mv_color, axis=None, color = self.color).format(format_dict)
         return ret
     
-    def get_position_change(self, start: str, end: str, is_color = False) -> pd.DataFrame | Styler:
+    def get_position_change(self, start: str, end: str, is_color = False):
         for name, account in self.accounts.items():
             old_position = account.get_account_position(the_time=start).set_index("coin")
             new_position = account.get_account_position(the_time=end).set_index("coin")
@@ -60,7 +60,7 @@ class DailyOkex(object):
         ret = self.position_change.copy() if not is_color else self.position_change.style.background_gradient(cmap='Blues', subset = list(self.position_change.columns), vmax = 0.15, vmin = -0.15).format(format_dict)
         return ret
     
-    def get_account_mr(self, is_color = True) -> pd.DataFrame | Styler:
+    def get_account_mr(self, is_color = True):
         self.account_mr: dict[str, dict[str, float]] = {}
         for name, account in self.accounts.items():
             self.account_mr[name] = self.mr_okex.run_account_mr(account = account)
