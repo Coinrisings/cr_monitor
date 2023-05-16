@@ -315,7 +315,7 @@ def set_color(val):
     #set mr color
     if val <=3:
         color = 'red'
-    elif val <=6:
+    elif val <=5:
         color = 'orange'
     else:
         color = 'green'
@@ -329,3 +329,6 @@ def set_funding_color(val):
         return None
     else:
         return 'background-color: red'
+    
+def set_mv_color(df: pd.DataFrame, color: pd.DataFrame) -> str:
+    return color
