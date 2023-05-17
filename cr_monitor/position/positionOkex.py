@@ -81,6 +81,7 @@ class PositionOkex(object):
                 self.now_price.loc[coin].fillna(self.get_coin_price(coin), inplace = True)
                 
     def get_disacount_equity(self):
+        self.disacount_equity = {}
         for coin in self.equity.keys():
             if coin not in ["USDC", "USD", "USDT", "USDK", "BUSD", "DAI"]:
                 self.disacount_equity[coin]= self.get_discount_asset(coin = coin, asset = self.equity[coin] * self.now_price.loc[coin, "usdt"]) if self.equity[coin] >0 else self.equity[coin] * self.now_price.loc[coin, "usdt"]
@@ -106,17 +107,20 @@ class PositionOkex(object):
         self.get_disacount_equity()
     
     def get_mmr_contract(self):
+        self.mmr_liability = pd.DataFrame(index = self.now_position.index, columns = self.now_position.columns)
         for coin in self.now_position.index:
             for contract in self.now_position.columns.drop("usdt"):
                 self.mmr_contract.loc[coin, contract] = self.data_okex.get_mmr(coin, self.now_position.loc[coin, contract], contract)
     
     def get_position_value(self):
+        self.position_value = pd.DataFrame(index = self.now_position.index, columns = self.now_position.columns)
         for coin in self.now_position.index:
             for contract in self.now_position.columns:
                 self.position_value.loc[coin, contract] = abs(self.now_position.loc[coin, contract]) * self.now_price.loc[coin, contract] if contract.split("-")[0] != "usd" else\
                     abs(self.now_position.loc[coin, contract]) * self.data_okex.get_contractsize_cswap(coin)
     
     def get_mm_liability(self):
+        self.mm_liability, self.mmr_liability = {}, {}
         for coin, amount in self.equity.items():
             self.mmr_liability[coin] = self.data_okex.get_mmr(coin, amount, contract = "spot")
             self.mm_liability[coin] = self.mmr_liability[coin] * abs(amount) * self.get_coin_price(coin)
