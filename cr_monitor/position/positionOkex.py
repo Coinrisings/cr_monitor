@@ -32,7 +32,7 @@ class PositionOkex(object):
     def update_equity(self):
         self.equity["USDT"] = 0 if "USDT" not in self.equity.keys() else self.equity["USDT"]
         for coin in self.now_position[self.now_position["usdt"] != 0].index:
-            self.equity[coin] = self.now_position.loc[coin, "usdt"]
+            self.equity[coin] = self.equity[coin] + self.now_position.loc[coin, "usdt"] if coin in self.equity.keys() else self.now_position.loc[coin, "usdt"]
             open_price = self.open_price.loc[coin, "usdt"] if coin in self.open_price.index else np.nan
             self.equity["USDT"] -= self.now_position.loc[coin, "usdt"] * open_price
         self.get_upnl()
@@ -55,7 +55,7 @@ class PositionOkex(object):
             if asset > minAmt and asset <= maxAmt:
                 real_asset += (asset - minAmt) * discountRate
             elif asset > maxAmt:
-                real_asset += maxAmt * discountRate
+                real_asset += (maxAmt - minAmt) * discountRate
             else:
                 break
         return real_asset

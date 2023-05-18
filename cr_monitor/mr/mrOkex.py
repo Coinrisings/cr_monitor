@@ -10,6 +10,7 @@ class MrOkex(object):
     def __init__(self) -> None:
         self.position = PositionOkex()
         self.price_range = np.arange(0.3, 3, 0.1)
+        self.btc_num = np.arange(10, 100, 10)
     
     def run_price_influence(self, now_price: pd.DataFrame, equity: dict[str, float]) -> dict[float, float]:
         price_influence = {}
@@ -21,16 +22,16 @@ class MrOkex(object):
         return price_influence
     
     def change_position(self, account: AccountOkex, contract: str, coin: str,mv: float):
-        account.get_equity()
+        account.get_equity() if not hasattr(account, "adjEq") else None
         if contract.split("-")[0] != "usd":
             amount = account.adjEq * mv / self.position.get_coin_price(coin)
-            if coin.upper() in account.now_position.index:
+            if coin.upper() in account.now_position.index and contract in account.now_position.columns and not np.isnan(account.now_position.loc[coin.upper(), contract]):
                 account.now_position.loc[coin.upper(), contract] += amount
             else:
                 account.now_position.loc[coin.upper(), contract] = amount
         else:
             amount = account.adjEq * mv / self.position.data_okex.get_contractsize_cswap(coin)
-            if coin.upper() in account.usd_position.index and contract in account.usd_position.columns:
+            if coin.upper() in account.usd_position.index and contract in account.usd_position.columns and not np.isnan(account.now_position.loc[coin.upper(), contract]):
                 account.usd_position.loc[coin.upper(), contract] += amount
             else:
                 account.usd_position.loc[coin.upper(), contract] = amount
@@ -57,3 +58,21 @@ class MrOkex(object):
         ret = self.run_price_influence(now_price=account.now_price.copy(), equity=account.cashBal)
         self.account_mr = copy.deepcopy(ret)
         return ret
+    
+    def assumed_open(self, add: dict[str, dict[str, float]]) -> dict[str, dict[str, float]]:
+        account = AccountOkex(deploy_id="1_1")
+        self.assumed_result = {}
+        for num in self.btc_num:
+            num = round(num, 0)
+            account.adjEq = num * self.position.get_coin_price("btc")
+            account.now_position = pd.DataFrame(columns = self.position.contracts)
+            account.usd_position = pd.DataFrame()
+            for combo in add.keys():
+                self.add_account_position(account, combo, add[combo])
+            self.position.now_position = account.now_position[self.position.contracts].copy()
+            self.position.now_position.loc[account.usd_position.index, account.usd_position.columns] = account.usd_position
+            account.get_now_price()
+            self.position.open_price = account.now_price.copy()
+            ret = self.run_price_influence(now_price=account.now_price.copy(), equity={"BTC": num})
+            self.assumed_result[num] = copy.deepcopy(ret)
+        return self.assumed_result

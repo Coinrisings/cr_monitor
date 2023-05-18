@@ -5,12 +5,14 @@ import pandas as pd
 import numpy as np
 import copy
 
-daily = DailyOkex()
-ret = daily.get_account_mr(is_color=False)
 
 m = MrOkex()
-# add = {"okx_usd_swap-okx_usdc_swap": {"BTC": -0.5}}
-add = {}
+m.price_range = [0.3, 0.5, 0.7, 1, 2, 3, 4, 5, 6, 7, 8]
+m.btc_num = [50]
+# add = {"okx_usdt_swap-okx_usd_swap": {"BTC": -2.5, "DOGE": 0.5, "LTC": 0.5}}
+add = {"okx_spot-okx_usdt_swap": {"FIL": -1}}
+result = m.assumed_open(add)
+# add = {}
 all_ret = {}
 for deploy_id in ["bg_bg003@dt_okex_cswap_okex_uswap_btc"]:
     account = AccountOkex(deploy_id=deploy_id)
