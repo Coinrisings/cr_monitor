@@ -12,8 +12,8 @@ import datetime
 
 class DailyOkex(object):
     
-    def __init__(self):
-        self.ignore_test = True
+    def __init__(self, ignore_test = True):
+        self.ignore_test = ignore_test
         self.database = ConnectData()
         self.mr_okex = MrOkex()
         self.position_okex = PositionOkex()
