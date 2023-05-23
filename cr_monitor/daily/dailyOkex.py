@@ -23,13 +23,13 @@ class DailyOkex(object):
         self.end_date = (datetime.datetime.utcnow() + datetime.timedelta(hours = 8)).date()
         self.start_date = self.end_date + datetime.timedelta(days = -31)
         self.mv_color = {
-            "okx_usd_swap-okx_usdc_swap" : "red",
-            "okx_usd_swap-okx_usdt_swap" : "orange",
-            "okx_spot-okx_usdt_swap": "springgreen",
-            "okx_usd_swap-okx_spot": "royalblue",
-            "okx_spot-okx_usdt_future": "violet",
-            "okx_usd_future-okx_spot": "grey",
-            "okx_usdc_swap-okx_usdt_swap" : "pink",
+            "okex_usd_swap-okex_usdc_swap" : "red",
+            "okex_usd_swap-okex_usdt_swap" : "orange",
+            "okex_spot-okex_usdt_swap": "green",
+            "okex_usd_swap-okex_spot": "royalblue",
+            "okex_spot-okex_usdt_future": "violet",
+            "okex_usd_future-okex_spot": "grey",
+            "okex_usdc_swap-okex_usdt_swap" : "pink",
         }
         self.init_accounts()
         self.get_pnl_daily = SsfoPnl(accounts = list(self.accounts.values()))
@@ -46,7 +46,7 @@ class DailyOkex(object):
             for i in position.index:
                 coin = position.loc[i, "coin"].upper()
                 self.all_position.loc[coin, name] = position.loc[i, "MV%"] / 100
-                self.color.loc[coin, name] = "background-color: " + self.mv_color[position.loc[i, "combo"]] if position.loc[i, "combo"] in self.mv_color.keys() else "white"
+                self.color.loc[coin, name] = "background-color: " + self.mv_color[position.loc[i, "combo"]] if position.loc[i, "combo"] in self.mv_color.keys() else "background-color: " + "black"
         self.all_position = self.all_position.fillna(0).sort_index(axis=0).sort_index(axis = 1)
         self.color.fillna("background-color: black", inplace = True)
         format_dict = {col: '{0:.4%}' for col in self.all_position.columns}
