@@ -5,7 +5,6 @@ from cr_assis.account.initAccounts import InitAccounts
 from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.connect.connectData import ConnectData
 import pandas as pd
-from pandas.io.formats.style import Styler
 from cr_assis.pnl.ssfoPnl import SsfoPnl
 from research.eva import eva
 import datetime
