@@ -41,6 +41,7 @@ class DailyOkex(object):
     
     def get_all_position(self, is_color = True):
         self.color = pd.DataFrame()
+        self.all_position: pd.DataFrame = pd.DataFrame()
         for name, account in self.accounts.items():
             position = account.get_account_position()
             for i in position.index:
