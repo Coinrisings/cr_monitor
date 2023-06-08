@@ -48,13 +48,13 @@ class MrOkex(object):
         account.get_now_position() if not hasattr(account, "now_position") else None
         account.get_open_price() if not hasattr(account, "open_price") or len(account.open_price) < len(account.now_position) else None
         account.get_now_price() if not hasattr(account, "now_price") or len(account.now_price) < len(account.now_position) else None
-        account.get_cashBal(account.ccy)
+        # account.get_cashBal(account.ccy)
         for combo in add.keys():
             self.add_account_position(account, combo, add[combo])
         self.position.now_position = account.now_position[self.position.contracts].copy()
         self.position.now_position.loc[account.usd_position.index, account.usd_position.columns] = account.usd_position
         self.position.open_price = account.open_price
-        ret = self.run_price_influence(now_price=account.now_price.copy(), equity=account.cashBal)
+        ret = self.run_price_influence(now_price=account.now_price.copy(), equity={})
         self.account_mr = copy.deepcopy(ret)
         return ret
     
