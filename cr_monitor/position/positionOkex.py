@@ -44,10 +44,7 @@ class PositionOkex(object):
             asset (float): the dollar value of coin
         """
         discount_info = self.data_okex.get_discount_info(coin) if coin.upper() not in self.data_okex.discount_info.keys() else self.data_okex.discount_info[coin.upper()]
-        if discount_info == []:
-            real_asset = np.nan
-        else:
-            real_asset = 0.0
+        real_asset = 0.0
         for info in discount_info:
             minAmt = float(info["minAmt"]) if info["minAmt"] != "" else 0
             maxAmt = float(info["maxAmt"]) if info["maxAmt"] != "" else np.inf

@@ -45,9 +45,9 @@ class MrOkex(object):
         account.now_position.fillna(0, inplace= True)
     
     def run_account_mr(self, account: AccountOkex, add: dict[str, dict[str, float]] = {}) -> pd.DataFrame:
-        account.get_now_position() if not hasattr(account, "now_position") else None
-        account.get_open_price() if not hasattr(account, "open_price") or len(account.open_price) < len(account.now_position) else None
-        account.get_now_price() if not hasattr(account, "now_price") or len(account.now_price) < len(account.now_position) else None
+        account.get_now_position()
+        account.get_open_price()
+        account.get_now_price()
         # account.get_cashBal(account.ccy)
         for combo in add.keys():
             self.add_account_position(account, combo, add[combo])
