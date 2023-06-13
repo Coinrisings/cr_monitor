@@ -66,11 +66,11 @@ class DailyOkex(object):
         ret = self.position_change.copy() if not is_color else self.position_change.style.background_gradient(cmap='Blues', subset = list(self.position_change.columns), vmax = 0.15, vmin = -0.15).format(format_dict)
         return ret
     
-    def get_account_mr(self, is_color = True):
+    def get_account_mr(self, is_color = True, add = {}):
         self.account_mr: dict[str, dict[str, float]] = {}
         for name, account in self.accounts.items():
             # self.mr_okex = MrOkex()
-            self.account_mr[name] = self.mr_okex.run_account_mr(account = account)
+            self.account_mr[name] = self.mr_okex.run_account_mr(account = account, add = {})
         ret = pd.DataFrame.from_dict(self.account_mr)
         ret = ret.style.applymap(set_color) if is_color else ret
         return ret
