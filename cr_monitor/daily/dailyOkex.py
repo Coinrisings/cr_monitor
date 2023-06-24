@@ -5,8 +5,9 @@ from cr_assis.account.initAccounts import InitAccounts
 from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.connect.connectData import ConnectData
 import pandas as pd
+import numpy as np
 from cr_assis.pnl.ssfoPnl import SsfoPnl
-from research.eva import eva
+from cr_assis.eva import eva
 import datetime
 
 class DailyOkex(object):
@@ -41,15 +42,29 @@ class DailyOkex(object):
     def get_all_position(self, is_color = True):
         self.color = pd.DataFrame()
         self.all_position: pd.DataFrame = pd.DataFrame()
+        self.position_funding : pd.DataFrame = pd.DataFrame()
         for name, account in self.accounts.items():
             position = account.get_account_position()
             for i in position.index:
                 coin = position.loc[i, "coin"].upper()
                 self.all_position.loc[coin, name] = position.loc[i, "MV%"] / 100
                 self.color.loc[coin, name] = "background-color: " + self.mv_color[position.loc[i, "combo"]] if position.loc[i, "combo"] in self.mv_color.keys() else "background-color: " + "black"
-        self.all_position = self.all_position.fillna(0).sort_index(axis=0).sort_index(axis = 1)
+                if coin not in self.position_funding.index:
+                    kind1 = position.loc[i, "combo"].split("-")[0].split("_")[1]
+                    kind2 = position.loc[i, "combo"].split("-")[1].split("_")[1]
+                    ret, _ = self.run_short_chance(kind1 = kind2, kind2 = kind1, input_coins = [coin]) if kind1 == "spot" and kind2 != "spot" else self.run_short_chance(kind1 = kind1, kind2 = kind2, input_coins = [coin])
+                    if (position.loc[i, "side"] == "long" and "spot" not in [kind1, kind2]) or (position.loc[i, "side"] == "short" and "spot" in [kind1, kind2]):
+                        ret = - ret
+                        ret["vol_24h"] = abs(ret["vol_24h"])
+                    self.position_funding = pd.concat([self.position_funding, ret])
+        for coin in self.all_position.index:
+            for col in self.position_funding.columns:
+                self.color.loc[coin, col] = "background-color: red" if self.position_funding.loc[coin, col] <0 else "background-color: black"
+        self.all_position = self.all_position.fillna(0).sort_index(axis=0)
+        self.all_position = pd.merge(self.all_position, self.position_funding, left_index = True, right_index = True)
         self.color.fillna("background-color: black", inplace = True)
-        format_dict = {col: '{0:.4%}' for col in self.all_position.columns}
+        format_dict = {col: '{0:.4%}' for col in self.all_position.columns if col != "vol_24h"}
+        format_dict["vol_24h"] = lambda x: format(int(x), ",") if not np.isnan(x) else "nan"
         ret = self.all_position.copy() if not is_color else self.all_position.style.apply(set_mv_color, axis=None, color = self.color).format(format_dict)
         return ret
     
@@ -61,7 +76,7 @@ class DailyOkex(object):
                 change = new_position.loc[coin, "MV%"] - old_position.loc[coin, "MV%"] if coin in old_position.index and old_position.loc[coin, "combo"] == new_position.loc[coin, "combo"] else \
                     new_position.loc[coin, "MV%"]
                 self.position_change.loc[coin.upper(), name] = change / 100
-        self.position_change = self.position_change.fillna(0).sort_index(axis=0).sort_index(axis = 1)
+        self.position_change = self.position_change.fillna(0).sort_index(axis=0)
         format_dict = {col: '{0:.4%}' for col in self.position_change.columns}
         ret = self.position_change.copy() if not is_color else self.position_change.style.background_gradient(cmap='Blues', subset = list(self.position_change.columns), vmax = 0.15, vmin = -0.15).format(format_dict)
         return ret
@@ -141,8 +156,8 @@ class DailyOkex(object):
         funding_summary = self.handle_funding_summary(funding_summary, kind1, kind2)
         return funding_summary, funding
     
-    def run_short_chance(self, kind1: str, kind2: str):
-        funding_summary, funding, _ = eva.run_funding("okex", kind1, "okex", kind2, self.start_date, self.end_date, play = False)
+    def run_short_chance(self, kind1: str, kind2: str, input_coins = []):
+        funding_summary, funding, _ = eva.run_funding("okex", kind1, "okex", kind2, self.start_date, self.end_date, play = False, input_coins = input_coins)
         funding = funding.T
         funding_summary = self.handle_funding_summary(funding_summary, kind1, kind2)
         return funding_summary, funding
@@ -154,7 +169,7 @@ class DailyOkex(object):
             if col != "vol_24h":
                 format_dict[col] = '{0:.3%}'
             else:
-                format_dict[col] = lambda x: format(round(x, 0), ",")
+                format_dict[col] = lambda x: format(int(x), ",") if not np.isnan(x) else "nan"
         return result.style.applymap(set_funding_color).format(format_dict)
     
     def get_dtc_funding(self):
