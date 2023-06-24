@@ -7,7 +7,7 @@ import copy
 
 m = MrOkex()
 m.price_range = [1]
-m.run_account_mr(account = AccountOkex(deploy_id="anta_anta001@pt_okex_btc"))
+m.run_account_mr(account = AccountOkex(deploy_id="anta_anta001@pt_okex_btc"), add = {"okx_spot-okx_usdc_swap": {"ETH": 0.1}})
 m.price_range = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 6, 7, 8]
 m.btc_num = [50]
 # add = {"okx_usdt_swap-okx_usd_swap": {"BTC": -2.5, "DOGE": 0.5, "LTC": 0.5}}
