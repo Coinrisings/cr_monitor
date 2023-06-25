@@ -59,9 +59,9 @@ class DailyOkex(object):
                     self.position_funding = pd.concat([self.position_funding, ret])
         for coin in self.all_position.index:
             for col in self.position_funding.columns:
-                self.color.loc[coin, col] = "background-color: red" if self.position_funding.loc[coin, col] <0 else "background-color: black"
+                self.color.loc[coin, col] = "background-color: red" if coin in self.position_funding.index and self.position_funding.loc[coin, col] <0 else "background-color: black"
         self.all_position = self.all_position.fillna(0).sort_index(axis=0)
-        self.all_position = pd.merge(self.all_position, self.position_funding, left_index = True, right_index = True)
+        self.all_position = pd.merge(self.all_position, self.position_funding, left_index = True, right_index = True, how = "outer")
         self.color.fillna("background-color: black", inplace = True)
         format_dict = {col: '{0:.4%}' for col in self.all_position.columns if col != "vol_24h"}
         format_dict["vol_24h"] = lambda x: format(int(x), ",") if not np.isnan(x) else "nan"
