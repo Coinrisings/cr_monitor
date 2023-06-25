@@ -41,7 +41,7 @@ class PositionOkex(object):
         for coin in self.now_position[self.now_position["usdt"] != 0].index:
             self.equity[coin] = self.equity[coin] + self.now_position.loc[coin, "usdt"] if coin in self.equity.keys() else self.now_position.loc[coin, "usdt"]
             open_price = self.open_price.loc[coin, "usdt"] if coin in self.open_price.index else np.nan
-            self.equity["USDT"] -= self.now_position.loc[coin, "usdt"] * open_price
+            self.equity["USDT"] -= self.now_position.loc[coin, "usdt"] * open_price if coin != "BTC" else sum(self.now_position.loc[coin].drop("usdt")) * open_price
         self.get_upnl()
         
     def get_discount_asset(self, coin: str, asset: float) ->float:
