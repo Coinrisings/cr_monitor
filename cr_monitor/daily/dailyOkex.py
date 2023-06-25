@@ -126,6 +126,7 @@ class DailyOkex(object):
                 account_overall.loc[i, f"{day}d_pnl%"] = rpnl[parameter_name][day]
                 if is_fpnl:
                     account_overall.loc[i, f"{day}d_fpnl%"] = fpnl[parameter_name][day]
+                    account_overall.loc[i, f"{day}d_ipnl%"] = fpnl[parameter_name][day]
         self.account_overall = account_overall.copy()
         format_dict = {'capital': lambda x: format(round(x, 4), ","), 
                         'MV': lambda x: format(round(x, 2), ","), 
