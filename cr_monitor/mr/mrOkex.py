@@ -27,7 +27,10 @@ class MrOkex(object):
         if contract.split("-")[0] != "usd":
             amount = account.adjEq * mv / self.position.get_coin_price(coin) if len(now_price) == 0 else account.adjEq * mv / now_price.loc[coin, "usdt"]
             if coin in account.now_position.index and contract in account.now_position.columns and not np.isnan(account.now_position.loc[coin, contract]):
-                account.open_price.loc[coin, contract] = abs(account.open_price.loc[coin, contract] * account.now_position.loc[coin, contract] + amount * price) / (account.now_position.loc[coin, contract]+amount)
+                if account.now_position.loc[coin, contract] * amount > 0:
+                    account.open_price.loc[coin, contract] = abs(account.open_price.loc[coin, contract] * account.now_position.loc[coin, contract] + amount * price) / abs(account.now_position.loc[coin, contract]+amount)
+                elif abs(account.now_position.loc[coin, contract]) < abs(amount):
+                    account.open_price.loc[coin, contract] = price
                 account.now_position.loc[coin, contract] += amount
             else:
                 account.open_price.loc[coin, contract] = price
@@ -35,7 +38,10 @@ class MrOkex(object):
         else:
             amount = account.adjEq * mv / self.position.data_okex.get_contractsize_cswap(coin)
             if coin in account.usd_position.index and contract in account.usd_position.columns and not np.isnan(account.now_position.loc[coin, contract]):
-                account.open_price.loc[coin, contract] = abs(account.open_price.loc[coin, contract] * account.usd_position.loc[coin, contract] + amount * price) / (account.usd_position.loc[coin, contract]+amount)
+                if account.now_position.loc[coin, contract] * amount > 0:
+                    account.open_price.loc[coin, contract] = abs(account.open_price.loc[coin, contract] * account.usd_position.loc[coin, contract] + amount * price) / abs(account.usd_position.loc[coin, contract]+amount)
+                elif abs(account.now_position.loc[coin, contract]) < abs(amount):
+                    account.open_price.loc[coin, contract] = price
                 account.usd_position.loc[coin, contract] += amount
             else:
                 account.open_price.loc[coin, contract] = price
