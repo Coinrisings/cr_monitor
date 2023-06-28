@@ -22,23 +22,28 @@ class MrOkex(object):
     
     def change_position(self, account: AccountOkex, contract: str, coin: str, mv: float, now_price = pd.DataFrame()):
         account.get_equity() if not hasattr(account, "adjEq") else None
+        coin = coin.upper()
         if contract.split("-")[0] != "usd":
             amount = account.adjEq * mv / self.position.get_coin_price(coin) if len(now_price) == 0 else account.adjEq * mv / now_price.loc[coin, "usdt"]
-            if coin.upper() in account.now_position.index and contract in account.now_position.columns and not np.isnan(account.now_position.loc[coin.upper(), contract]):
-                account.now_position.loc[coin.upper(), contract] += amount
+            if coin in account.now_position.index and contract in account.now_position.columns and not np.isnan(account.now_position.loc[coin, contract]):
+                account.open_price.loc[coin, contract] = abs(account.open_price.loc[coin, contract] * account.now_position.loc[coin, contract] + amount * account.now_price.loc[coin, contract]) / (account.now_position.loc[coin, contract]+amount)
+                account.now_position.loc[coin, contract] += amount
             else:
-                account.now_position.loc[coin.upper(), contract] = amount
+                account.open_price.loc[coin, contract] = account.now_price.loc[coin, contract]
+                account.now_position.loc[coin, contract] = amount
         else:
             amount = account.adjEq * mv / self.position.data_okex.get_contractsize_cswap(coin)
-            if coin.upper() in account.usd_position.index and contract in account.usd_position.columns and not np.isnan(account.now_position.loc[coin.upper(), contract]):
-                account.usd_position.loc[coin.upper(), contract] += amount
+            if coin in account.usd_position.index and contract in account.usd_position.columns and not np.isnan(account.now_position.loc[coin, contract]):
+                account.open_price.loc[coin, contract] = abs(account.open_price.loc[coin, contract] * account.usd_position.loc[coin, contract] + amount * account.now_price.loc[coin, contract]) / (account.usd_position.loc[coin, contract]+amount)
+                account.usd_position.loc[coin, contract] += amount
             else:
-                account.usd_position.loc[coin.upper(), contract] = amount
+                account.open_price.loc[coin, contract] = account.now_price.loc[coin, contract]
+                account.usd_position.loc[coin, contract] = amount
     
     def add_account_position(self, account: AccountOkex, combo: str, add_coin: dict[str, float], now_price = pd.DataFrame()):
         master, slave = combo.split("-")
-        master = master.replace("okx_", "").replace("spot", "usdt").replace("_", "-")
-        slave = slave.replace("okx_", "").replace("spot", "usdt").replace("_", "-")
+        master = master.replace("okx_", "").replace("okex_", "").replace("spot", "usdt").replace("_", "-")
+        slave = slave.replace("okx_", "").replace("okex_", "").replace("spot", "usdt").replace("_", "-")
         for coin, mv in add_coin.items():
             self.change_position(account, master, coin, mv, now_price)
             self.change_position(account, slave, coin, -mv, now_price)
