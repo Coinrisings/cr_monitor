@@ -84,7 +84,7 @@ class DailyOkex(object):
     def get_account_mr(self, is_color = True, add = {}):
         self.account_mr: dict[str, dict[str, float]] = {}
         for name, account in self.accounts.items():
-            # self.mr_okex = MrOkex()
+            self.mr_okex = MrOkex()
             self.account_mr[name] = self.mr_okex.run_account_mr(account = account, add = add)
         ret = pd.DataFrame.from_dict(self.account_mr)
         ret = ret.style.applymap(set_color) if is_color else ret
