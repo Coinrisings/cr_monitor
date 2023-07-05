@@ -22,14 +22,14 @@ class DisacountData(object):
             {'discountRate': '0', 'maxAmt': '', 'minAmt': '4000000'}]
             }
         self.lv4 = {
-            "coin": ["AAVE", "ALGO", "GALA", "NEAR", "SOL", "SUSHI", "TRX", "UNI", "XRP"],
+            "coin": ["AAVE", "ALGO", "GALA","BETH", "NEAR", "SOL", "SUSHI", "TRX", "UNI", "XRP"],
             "info": [{'discountRate': '0.85', 'maxAmt': '1000000', 'minAmt': '0'},
                 {'discountRate': '0.75', 'maxAmt': '2000000', 'minAmt': '1000000'},
                 {'discountRate': '0.5', 'maxAmt': '4000000', 'minAmt': '2000000'},
                 {'discountRate': '0', 'maxAmt': '', 'minAmt': '4000000'}]
         }
         self.lv5 = {
-            "coin": ["AXS", "BAT", "BETH", "BNB", "COMP", "CRO", "CRV", "DASH", "EGLD",
+            "coin": ["AXS", "BAT", "BNB", "COMP", "CRO", "CRV", "DASH", "EGLD",
             "ETC", "FLOW", "GRT", "ICP", "KSM", "LRC", "LUNA", "NEO", "OMG",
             "PEOPLE", "QTUM", "XLM", "XMR", "XTZ", "YFI", "YFII", "ZEC"],
             "info": [{'discountRate': '0.8', 'maxAmt': '250000', 'minAmt': '0'},
