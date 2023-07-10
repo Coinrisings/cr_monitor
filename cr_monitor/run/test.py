@@ -2,6 +2,15 @@ from cr_assis.load import *
 print(f"running time: {datetime.datetime.now()}")
 import requests, yaml
 from github import Github
+from cr_assis.connect.connectOkex import ConnectOkex
+from cr_assis.connect.connectData import ConnectData
+database = ConnectData()
+p = database.get_redis_data(key = f"okexv5/btc-usdt")
+dataokex = ConnectOkex()
+ret = dataokex.get_mmr(coin = "btc", amount = 10, contract="usdt-swap")
+ret = dataokex.get_contractsize(coin = "btc", contract="usdt-swap")
+ret = dataokex.get_tiers(coin = "btc", contract = "usdt-swap")
+
 
 from imap_tools import MailBox
 with open(f"{os.environ['HOME']}/.cr_assis/mongo_url.yml", "rb") as f:

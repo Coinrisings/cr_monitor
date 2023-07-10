@@ -51,9 +51,12 @@ class MrOkex(object):
         master, slave = combo.split("-")
         master = master.replace("okx_", "").replace("okex_", "").replace("spot", "usdt").replace("_", "-")
         slave = slave.replace("okx_", "").replace("okex_", "").replace("spot", "usdt").replace("_", "-")
+        account.get_equity() if not hasattr(account, "adjEq") else None
         for coin, mv in add_coin.items():
-            self.change_position(account, master, coin, mv, now_price)
-            self.change_position(account, slave, coin, -mv, now_price)
+            coin = coin.upper()
+            now_mv = account.now_position.loc[coin, master] * account.now_price.loc[coin, master] / account.adjEq if coin in account.now_position.index else 0
+            self.change_position(account, master, coin, mv-now_mv, now_price)
+            self.change_position(account, slave, coin, now_mv-mv, now_price)
         account.now_position.fillna(0, inplace= True)
     
     def run_account_mr(self, account: AccountOkex, add: dict[str, dict[str, float]] = {}) -> pd.DataFrame:
