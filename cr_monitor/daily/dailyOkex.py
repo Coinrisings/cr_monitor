@@ -49,7 +49,7 @@ class DailyOkex(object):
                 coin = position.loc[i, "coin"].upper()
                 self.all_position.loc[coin, name] = position.loc[i, "MV%"] / 100
                 self.color.loc[coin, name] = "background-color: " + self.mv_color[position.loc[i, "combo"]] if position.loc[i, "combo"] in self.mv_color.keys() else "background-color: " + "black"
-                if coin not in self.position_funding.index:
+                if coin not in self.position_funding.index and type(position.loc[i, "combo"]) == str:
                     kind1 = position.loc[i, "combo"].split("-")[0].split("_")[1]
                     kind2 = position.loc[i, "combo"].split("-")[1].split("_")[1]
                     ret, _ = self.run_short_chance(kind1 = kind2, kind2 = kind1, input_coins = [coin]) if kind1 == "spot" and kind2 != "spot" else self.run_short_chance(kind1 = kind1, kind2 = kind2, input_coins = [coin])
