@@ -6,9 +6,9 @@ import numpy as np
 import copy
 
 m = MrOkex()
-account = AccountOkex("bg_bg003@pt_okex_btc")
+account = AccountOkex("bg_001@pt_okex_btc")
 # m.price_range = [1]
-ret = m.run_account_mr(account, add = {"okex_spot-okex_usdt_swap": {"doge": 0, "ltc": 0.35, "bch": -0.1}, "okex_usd_swap-okex_usdt_swap": {"fil": 0.25}})
+ret = m.run_account_mr(account)
 ret
 # account.get_now_position()
 # account.get_open_price()
