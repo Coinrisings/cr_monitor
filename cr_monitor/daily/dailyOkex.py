@@ -26,10 +26,13 @@ class DailyOkex(object):
             "okex_usd_swap-okex_usdc_swap" : "red",
             "okex_usd_swap-okex_usdt_swap" : "orange",
             "okex_spot-okex_usdt_swap": "green",
+            "okex_usdt_swap-okex_spot": "green",
             "okex_usd_swap-okex_spot": "royalblue",
             "okex_spot-okex_usdt_future": "violet",
             "okex_usd_future-okex_spot": "grey",
             "okex_usdc_swap-okex_usdt_swap" : "pink",
+            "okex_usdc_swap-okex_spot" : "purple",
+            "okex_spot-okex_usdc_swap" : "purple",
         }
         self.init_accounts()
         self.get_pnl_daily = SsfoPnl(accounts = list(self.accounts.values()))
@@ -53,7 +56,7 @@ class DailyOkex(object):
                     kind1 = position.loc[i, "combo"].split("-")[0].split("_")[1]
                     kind2 = position.loc[i, "combo"].split("-")[1].split("_")[1]
                     ret, _ = self.run_short_chance(kind1 = kind2, kind2 = kind1, input_coins = [coin]) if kind1 == "spot" and kind2 != "spot" else self.run_short_chance(kind1 = kind1, kind2 = kind2, input_coins = [coin])
-                    if (position.loc[i, "side"] == "long" and "spot" not in [kind1, kind2]) or (position.loc[i, "side"] == "short" and "spot" in [kind1, kind2]):
+                    if (position.loc[i, "side"] == "long" and "spot" != kind1) or (position.loc[i, "side"] == "short" and "spot" == kind1):
                         ret = - ret
                         ret["vol_24h"] = abs(ret["vol_24h"])
                     self.position_funding = pd.concat([self.position_funding, ret])
