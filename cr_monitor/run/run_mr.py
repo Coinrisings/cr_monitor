@@ -6,7 +6,15 @@ import numpy as np
 import copy
 
 m = MrOkex()
-account = AccountOkex("test_otest5@pt_okex_btc")
+m.btc_num = [0.09]
+# m.price_range = [1]
+add = {
+    "okx_spot-okx_usdt_swap": {'ltc':0.5,'beth':0.5}
+}
+result = m.assumed_open(add)
+result
+m = MrOkex()
+account = AccountOkex("test_otest8@pt_okex_btc")
 # m.price_range = [1]
 ret = m.run_account_mr(account)
 ret

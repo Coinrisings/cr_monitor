@@ -56,7 +56,7 @@ class MrOkex(object):
             coin = coin.upper()
             now_mv = account.now_position.loc[coin, master] * account.now_price.loc[coin, master] / account.adjEq if coin in account.now_position.index else 0
             self.change_position(account, master, coin, mv-now_mv, now_price)
-            self.change_position(account, slave, coin, now_mv-mv, now_price)
+            self.change_position(account, slave, coin, now_mv-mv, now_price) if coin != "BETH" or master != "usdt" else self.change_position(account, slave, "ETH", now_mv-mv, now_price)
         account.now_position.fillna(0, inplace= True)
     
     def run_account_mr(self, account: AccountOkex, add: dict[str, dict[str, float]] = {}) -> pd.DataFrame:
@@ -77,7 +77,7 @@ class MrOkex(object):
         account = AccountOkex(deploy_id="1_1")
         self.assumed_result = {}
         for num in self.btc_num:
-            num = round(num, 0)
+            num = round(num, 3)
             account.adjEq = num * self.position.get_coin_price("btc") if len(now_price) == 0 else num * now_price.loc["BTC", "usdt"]
             account.now_position = pd.DataFrame(columns = self.position.contracts)
             account.usd_position = pd.DataFrame()
