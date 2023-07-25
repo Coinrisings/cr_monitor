@@ -42,7 +42,7 @@ class DailyOkex(object):
         self.init = InitAccounts(ignore_test= self.ignore_test)
         self.accounts = self.init.init_accounts_okex()
     
-    def get_all_position(self, is_color = True):
+    def get_all_position(self, is_color = True, is_funding = True):
         self.color = pd.DataFrame()
         self.all_position: pd.DataFrame = pd.DataFrame()
         self.position_funding : pd.DataFrame = pd.DataFrame()
@@ -52,7 +52,7 @@ class DailyOkex(object):
                 coin = position.loc[i, "coin"].upper()
                 self.all_position.loc[coin, name] = position.loc[i, "MV%"] / 100
                 self.color.loc[coin, name] = "background-color: " + self.mv_color[position.loc[i, "combo"]] if position.loc[i, "combo"] in self.mv_color.keys() else "background-color: " + "black"
-                if coin not in self.position_funding.index and type(position.loc[i, "combo"]) == str:
+                if coin not in self.position_funding.index and type(position.loc[i, "combo"]) == str and is_funding:
                     kind1 = position.loc[i, "combo"].split("-")[0].split("_")[1]
                     kind2 = position.loc[i, "combo"].split("-")[1].split("_")[1]
                     ret, _ = self.run_short_chance(kind1 = kind2, kind2 = kind1, input_coins = [coin]) if kind1 == "spot" and kind2 != "spot" else self.run_short_chance(kind1 = kind1, kind2 = kind2, input_coins = [coin])
@@ -60,18 +60,19 @@ class DailyOkex(object):
                         ret = - ret
                         ret["vol_24h"] = abs(ret["vol_24h"])
                     self.position_funding = pd.concat([self.position_funding, ret])
-        for coin in self.all_position.index:
-            for col in self.position_funding.columns:
-                self.color.loc[coin, col] = "background-color: red" if coin in self.position_funding.index and self.position_funding.loc[coin, col] <0 else "background-color: black"
+        if is_funding:
+            for coin in self.all_position.index:
+                for col in self.position_funding.columns:
+                    self.color.loc[coin, col] = "background-color: red" if coin in self.position_funding.index and self.position_funding.loc[coin, col] <0 else "background-color: black"
         self.all_position = self.all_position.fillna(0).sort_index(axis=0)
-        self.all_position = pd.merge(self.all_position, self.position_funding, left_index = True, right_index = True, how = "outer")
+        self.all_position = pd.merge(self.all_position, self.position_funding, left_index = True, right_index = True, how = "outer") if is_funding else self.all_position
         self.color.fillna("background-color: black", inplace = True)
         format_dict = {col: '{0:.4%}' for col in self.all_position.columns if col != "vol_24h"}
         format_dict["vol_24h"] = lambda x: format(int(x), ",") if not np.isnan(x) else "nan"
         ret = self.all_position.copy() if not is_color else self.all_position.style.apply(set_mv_color, axis=None, color = self.color).format(format_dict)
         return ret
     
-    def get_position_change(self, start: str, end: str, is_color = False):
+    def get_position_change(self, start: str, end: str, is_color = True):
         for name, account in self.accounts.items():
             old_position = account.get_account_position(the_time=start).set_index("coin")
             new_position = account.get_account_position(the_time=end).set_index("coin")
@@ -81,7 +82,7 @@ class DailyOkex(object):
                 self.position_change.loc[coin.upper(), name] = change / 100
         self.position_change = self.position_change.fillna(0).sort_index(axis=0)
         format_dict = {col: '{0:.4%}' for col in self.position_change.columns}
-        ret = self.position_change.copy() if not is_color else self.position_change.style.background_gradient(cmap='Blues', subset = list(self.position_change.columns), vmax = 0.15, vmin = -0.15).format(format_dict)
+        ret = self.position_change.copy() if not is_color else self.position_change.style.background_gradient(cmap='Blues', subset = list(self.position_change.columns)).format(format_dict)
         return ret
     
     def get_account_mr(self, is_color = True, add = {}):
