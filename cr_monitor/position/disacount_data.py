@@ -8,7 +8,7 @@ class DisacountData(object):
             {'discountRate': '0.95', 'maxAmt': '40000000', 'minAmt': '20000000'},
             {'discountRate': '0.9', 'maxAmt': '100000000', 'minAmt': '40000000'},
             {'discountRate': '0', 'maxAmt': '', 'minAmt': '100000000'}]}
-        self.lv2 = {"coin":["EOS", "LTC", "BCH"],
+        self.lv2 = {"coin":["EOS", "LTC", "BCH", "BETH"],
             "info": [{'discountRate': '0.95', 'maxAmt': '2000000', 'minAmt': '0'},
             {'discountRate': '0.85', 'maxAmt': '4000000', 'minAmt': '2000000'},
             {'discountRate': '0.5', 'maxAmt': '8000000', 'minAmt': '4000000'},
