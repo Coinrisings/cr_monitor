@@ -121,8 +121,8 @@ class DailyOkex(object):
     
     def run_daily(self, is_fpnl = False) -> pd.DataFrame:
         rpnl = self.get_pnl_daily.get_rpnl()
-        fpnl, ipnl = self.get_pnl_daily.get_fpnl() if is_fpnl else {}
-        self.get_now_situation() if not hasattr(self, "now_situation") else None
+        fpnl, ipnl = self.get_pnl_daily.get_fpnl() if is_fpnl else ({}, {})
+        self.get_now_situation()
         account_overall = self.now_situation.copy()
         for i in account_overall.index:
             parameter_name = account_overall.loc[i, "account"]
