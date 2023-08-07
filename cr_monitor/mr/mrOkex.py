@@ -55,8 +55,8 @@ class MrOkex(object):
         for coin, mv in add_coin.items():
             coin = coin.upper()
             now_mv = account.now_position.loc[coin, master] * account.now_price.loc[coin, master] / account.adjEq if coin in account.now_position.index else 0
-            self.change_position(account, master, coin, mv-now_mv, now_price)
-            self.change_position(account, slave, coin, now_mv-mv, now_price) if coin != "BETH" or master != "usdt" else self.change_position(account, slave, "ETH", now_mv-mv, now_price)
+            self.change_position(account, master, coin, mv-now_mv, now_price) if coin != "BETH" or master == "usdt" else self.change_position(account, master, "ETH", now_mv-mv, now_price)
+            self.change_position(account, slave, coin, now_mv-mv, now_price) if coin != "BETH" or slave == "usdt" else self.change_position(account, slave, "ETH", now_mv-mv, now_price)
         account.now_position.fillna(0, inplace= True)
     
     def run_account_mr(self, account: AccountOkex, add: dict[str, dict[str, float]] = {}) -> pd.DataFrame:
@@ -67,6 +67,7 @@ class MrOkex(object):
         for combo in add.keys():
             self.add_account_position(account, combo, add[combo])
         self.position.now_position = account.now_position[self.position.contracts].copy()
+        self.position.now_position = pd.concat([self.position.now_position, pd.DataFrame(index = list(set(account.usd_position.index) - set(account.now_position.index)), columns = self.position.contracts).fillna(0)])
         self.position.now_position.loc[account.usd_position.index, account.usd_position.columns] = account.usd_position
         self.position.open_price = account.open_price
         ret = self.run_price_influence(now_price=account.now_price.copy(), equity={})
@@ -84,6 +85,7 @@ class MrOkex(object):
             for combo in add.keys():
                 self.add_account_position(account, combo, add[combo], now_price)
             self.position.now_position = account.now_position[self.position.contracts].copy()
+            self.position.now_position = pd.concat([self.position.now_position, pd.DataFrame(index = list(set(account.usd_position.index) - set(account.now_position.index)), columns = self.position.contracts).fillna(0)])
             self.position.now_position.loc[account.usd_position.index, account.usd_position.columns] = account.usd_position
             if len(now_price) == 0:
                 account.get_now_price()
