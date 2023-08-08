@@ -100,17 +100,18 @@ class DailyOkex(object):
         Returns:
             pd.DataFrame: columns = ["account", "capital", "ccy", "MV", "MV%", "mr"]
         """
-        accounts = list(self.accounts.values())
-        now_situation = pd.DataFrame(columns = ["account", "capital", "ccy", "MV", "MV%", "mr"], index = range(len(accounts)))
-        for i in now_situation.index:
-            account = accounts[i]
+        now_situation = pd.DataFrame(columns = ["account", "capital", "ccy", "MV", "MV%", "mr"], index = range(len(self.accounts)))
+        i = 0
+        tickers = AccountOkex("1_1").get_tickers(instType="SPOT")
+        for name, account in self.accounts.items():
+            account.tickers = tickers
             account.get_account_position()
             mv, mv_precent = account.position["MV"].sum(), account.position["MV%"].sum() / 100
             account.get_mgnRatio()
             capital = account.get_mean_equity()
             ccy = account.ccy
             mr = account.mr["okex"]
-            now_situation.loc[i] = [account.parameter_name, capital, ccy, mv, mv_precent, mr]
+            now_situation.loc[i] = [name, capital, ccy, mv, mv_precent, mr]
         self.now_situation = now_situation.copy()
         format_dict = {'capital': lambda x: format(round(x, 4), ","),  
                         'MV': lambda x: format(round(x, 2), ","), 
