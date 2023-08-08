@@ -121,7 +121,7 @@ class DailyOkex(object):
     
     def run_daily(self, is_fpnl = False) -> pd.DataFrame:
         rpnl = self.get_pnl_daily.get_rpnl()
-        fpnl, ipnl = self.get_pnl_daily.get_fpnl() if is_fpnl else ({}, {})
+        fpnl, ipnl, tpnl = self.get_pnl_daily.get_fpnl() if is_fpnl else ({}, {}, {})
         self.get_now_situation()
         account_overall = self.now_situation.copy()
         for i in account_overall.index:
@@ -129,6 +129,7 @@ class DailyOkex(object):
             for day in [1, 3, 7]:
                 account_overall.loc[i, f"{day}d_pnl%"] = rpnl[parameter_name][day]
                 if is_fpnl:
+                    account_overall.loc[i, f"{day}d_tpnl%"] = tpnl[parameter_name][day]
                     account_overall.loc[i, f"{day}d_fpnl%"] = fpnl[parameter_name][day]
                     account_overall.loc[i, f"{day}d_ipnl%"] = ipnl[parameter_name][day]
         self.account_overall = account_overall.copy()
