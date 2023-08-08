@@ -104,7 +104,7 @@ class DailyOkex(object):
         i = 0
         tickers = AccountOkex("1_1").get_tickers(instType="SPOT")
         for name, account in self.accounts.items():
-            account.tickers = tickers
+            account.tickers["SPOT"] = tickers
             account.get_account_position()
             mv, mv_precent = account.position["MV"].sum(), account.position["MV%"].sum() / 100
             account.get_mgnRatio()
