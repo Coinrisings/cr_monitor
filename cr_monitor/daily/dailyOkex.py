@@ -112,6 +112,7 @@ class DailyOkex(object):
             ccy = account.ccy
             mr = account.mr["okex"]
             now_situation.loc[i] = [name, capital, ccy, mv, mv_precent, mr]
+            i+=1
         self.now_situation = now_situation.copy()
         format_dict = {'capital': lambda x: format(round(x, 4), ","),  
                         'MV': lambda x: format(round(x, 2), ","), 
