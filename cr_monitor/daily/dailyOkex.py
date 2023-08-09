@@ -152,9 +152,11 @@ class DailyOkex(object):
             funding_summary[col + "_avg"] = funding_summary[col] / num
         rate = pd.DataFrame(columns = ["next", "current"])
         for coin in funding_summary.index:
-            data0 = eva.get_last_influx_funding(exchange_name="okex", pair_name=f"{coin.lower()}-{kind1}-swap") if kind1 != "spot" else pd.DataFrame.from_dict({"next_fee": {0: 0}, "rate": {0: 0}})
-            data1 = eva.get_last_influx_funding(exchange_name="okex", pair_name=f"{coin.lower()}-{kind2}-swap") if kind2 != "spot" else pd.DataFrame.from_dict({"next_fee": {0: 0}, "rate": {0: 0}})
+            data0 = eva.get_last_influx_funding(exchange_name="okex", pair_name=f"""{coin.lower().replace("beth", "eth")}-{kind1}-swap""") if kind1 != "spot" else pd.DataFrame.from_dict({"next_fee": {0: 0}, "rate": {0: 0}})
+            data1 = eva.get_last_influx_funding(exchange_name="okex", pair_name=f"""{coin.lower().replace("beth", "eth")}-{kind2}-swap""") if kind2 != "spot" else pd.DataFrame.from_dict({"next_fee": {0: 0}, "rate": {0: 0}})
             rate.loc[coin] = [data0["next_fee"].values[-1] - data1["next_fee"].values[-1], data0["rate"].values[-1] - data1["rate"].values[-1]]
+            if coin.upper() == "BETH":
+                rate.loc[coin] += eva.get_eth2_staking() / 365 / 3
         funding_summary = pd.concat([rate, funding_summary], axis = 1)
         return funding_summary
     
