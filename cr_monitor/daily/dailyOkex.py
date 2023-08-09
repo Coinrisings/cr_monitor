@@ -136,7 +136,7 @@ class DailyOkex(object):
                     account_overall.loc[i, f"{day}d_ipnl%"] = ipnl[parameter_name][day]
         self.account_overall = account_overall.copy()
         format_dict = {'capital': lambda x: format(round(x, 4), ","), 
-                        'MV': lambda x: format(round(x, 2), ","), 
+                        'MV': lambda x: format(int(x), ","), 
                         'MV%': '{0:.2%}', 
                         'mr': lambda x: format(round(x, 2), ",")}
         for col in account_overall.columns:
